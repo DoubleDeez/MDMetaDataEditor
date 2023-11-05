@@ -11,18 +11,11 @@
 #include "K2Node_FunctionEntry.h"
 #include "K2Node_Tunnel.h"
 #include "Kismet2/BlueprintEditorUtils.h"
-#include "Runtime/Launch/Resources/Version.h"
-#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
-#include "SGameplayTagCombo.h"
-#include "SGameplayTagPicker.h"
-#else
-#include "SGameplayTagWidget.h"
-#endif
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
-#include "Widgets/Input/SComboButton.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SNumericEntryBox.h"
+#include "Widgets/SMDMetaDataGameplayTagPicker.h"
 #include "Widgets/Text/STextBlock.h"
 
 namespace MDMDECB_Private
@@ -59,158 +52,6 @@ namespace MDMDECB_Private
 		return nullptr;
 	}
 }
-
-class SMDMetaDataGameplayTagPicker : public SCompoundWidget
-{
-public:
-	DECLARE_DELEGATE_OneParam(FOnRemoveMetaData, const FName&);
-	DECLARE_DELEGATE_TwoParams(FOnSetMetaData, const FName&, const FString& Value);
-
-	SLATE_BEGIN_ARGS(SMDMetaDataGameplayTagPicker)
-	{}
-		SLATE_ARGUMENT_DEFAULT(bool, bMultiSelect) = false;
-		SLATE_ARGUMENT_DEFAULT(FName, Key) = NAME_None;
-
-		SLATE_ATTRIBUTE(TOptional<FString>, MetaDataValue);
-		SLATE_EVENT(FOnRemoveMetaData, OnRemoveMetaData);
-		SLATE_EVENT(FOnSetMetaData, OnSetMetaData);
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs)
-	{
-		Key = InArgs._Key;
-		bIsMulti = InArgs._bMultiSelect;
-		MetaDataValue = InArgs._MetaDataValue;
-		OnRemoveMetaData = InArgs._OnRemoveMetaData;
-		OnSetMetaData = InArgs._OnSetMetaData;
-
-		const TOptional<FString> ValueStringOptional = MetaDataValue.Get(TOptional<FString>());
-		if (ValueStringOptional.IsSet() && !ValueStringOptional.GetValue().IsEmpty())
-		{
-			TArray<FString> TagStrings;
-			ValueStringOptional.GetValue().ParseIntoArray(TagStrings, TEXT(","));
-
-			for (const FString& TagString : TagStrings)
-			{
-				const FGameplayTag FoundTag = FGameplayTag::RequestGameplayTag(*TagString);
-				if (FoundTag.IsValid())
-				{
-					GameplayTagContainer.AddTag(FoundTag);
-				}
-			}
-		}
-
-		ChildSlot
-		[
-#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
-			!bIsMulti
-				? TSharedRef<SWidget>(SNew(SGameplayTagCombo)
-					.Tag(GameplayTagContainer.First())
-					.OnTagChanged(this, &SMDMetaDataGameplayTagPicker::UpdateMetaDataTag))
-				:
-#endif
-			SNew(SComboButton)
-			.ToolTipText(this, &SMDMetaDataGameplayTagPicker::GetValueToolTip)
-			.OnMenuOpenChanged(this, &SMDMetaDataGameplayTagPicker::UpdateMetaData)
-			.ButtonContent()
-			[
-				SNew(STextBlock)
-				.Text(this, &SMDMetaDataGameplayTagPicker::GetValue)
-				.Font(IDetailLayoutBuilder::GetDetailFont())
-			]
-			.MenuContent()
-			[
-#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
-				SNew(SGameplayTagPicker)
-					.ShowMenuItems(true)
-					.TagContainers({ GameplayTagContainer })
-					.OnTagChanged(this, &SMDMetaDataGameplayTagPicker::UpdateMetaDataContainer)
-#else
-				SNew(SGameplayTagWidget, TArray<SGameplayTagWidget::FEditableGameplayTagContainerDatum>{ { nullptr, &GameplayTagContainer } })
-				.MultiSelect(bIsMulti)
-				.OnTagChanged(this, &SMDMetaDataGameplayTagPicker::UpdateMetaData, bIsMulti)
-#endif
-			]
-		];
-	}
-
-private:
-	FText GetValue() const
-	{
-		const TOptional<FString> ValueStringOptional = MetaDataValue.Get(TOptional<FString>());
-		if (!ValueStringOptional.IsSet() || ValueStringOptional.GetValue().IsEmpty())
-		{
-			return INVTEXT("Empty");
-		}
-
-		return FText::FromString(ValueStringOptional.GetValue().Replace(TEXT(","), TEXT(", ")));
-	}
-
-	FText GetValueToolTip() const
-	{
-		const TOptional<FString> ValueStringOptional = MetaDataValue.Get(TOptional<FString>());
-		if (!ValueStringOptional.IsSet() || ValueStringOptional.GetValue().IsEmpty())
-		{
-			return FText::GetEmpty();
-		}
-
-		return FText::FromString(ValueStringOptional.GetValue().Replace(TEXT(","), TEXT("\r\n")));
-	}
-
-	void UpdateMetaDataContainer(const TArray<FGameplayTagContainer>& Containers)
-	{
-		GameplayTagContainer = !Containers.IsEmpty() ? Containers[0] : FGameplayTagContainer{};
-	}
-
-	void UpdateMetaDataTag(const FGameplayTag InTag)
-	{
-		GameplayTagContainer.Reset(1);
-		if (InTag.IsValid())
-		{
-			GameplayTagContainer.AddTag(InTag);
-		}
-
-		UpdateMetaData(false);
-	}
-
-	void UpdateMetaData(bool bDontUpdate)
-	{
-		if (bDontUpdate)
-		{
-			return;
-		}
-
-		if (GameplayTagContainer.IsEmpty())
-		{
-			OnRemoveMetaData.ExecuteIfBound(Key);
-		}
-		else
-		{
-			TArray<FGameplayTag> GameplayTagArray;
-			GameplayTagContainer.GetGameplayTagArray(GameplayTagArray);
-
-			FString Value;
-			for (const FGameplayTag& TagIt : GameplayTagArray)
-			{
-				if (!Value.IsEmpty())
-				{
-					Value += TEXT(",");
-				}
-
-				Value += TagIt.ToString();
-			}
-
-			OnSetMetaData.ExecuteIfBound(Key, Value);
-		}
-	}
-
-	FName Key = NAME_None;
-	bool bIsMulti = false;
-	FGameplayTagContainer GameplayTagContainer;
-	TAttribute<TOptional<FString>> MetaDataValue;
-	FOnRemoveMetaData OnRemoveMetaData;
-	FOnSetMetaData OnSetMetaData;
-};
 
 FMDMetaDataEditorCustomizationBase::FMDMetaDataEditorCustomizationBase(const TWeakPtr<IBlueprintEditor>& BlueprintEditor, TWeakObjectPtr<UBlueprint>&& BlueprintPtr)
 	: BlueprintEditor(BlueprintEditor)

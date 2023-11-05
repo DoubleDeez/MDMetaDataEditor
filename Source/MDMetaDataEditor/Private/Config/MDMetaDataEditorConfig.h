@@ -26,6 +26,8 @@ enum class EMDMetaDataEditorKeyType : uint8
 	GameplayTag,
 	// The meta data value is one or more user-specified Gameplay Tags
 	GameplayTagContainer,
+	// The meta data value is selected from the list of specified values
+	ValueList
 	// TODO - The meta data value is a UStruct path
 	// Struct,
 	// TODO - The meta data value is a UClass path
@@ -136,6 +138,10 @@ public:
 
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (EditConditionHides, EditCondition = "bAllowSlider && KeyType == EMDMetaDataEditorKeyType::Float"))
 	float MaxSliderFloat = 100.f;
+
+	// The list of values the user can select from when setting the value of this meta data key
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (EditConditionHides, EditCondition = "KeyType == EMDMetaDataEditorKeyType::ValueList"))
+	TArray<FString> ValueList;
 
 	bool operator==(const FMDMetaDataKey& Other) const;
 	bool operator!=(const FMDMetaDataKey& Other) const
