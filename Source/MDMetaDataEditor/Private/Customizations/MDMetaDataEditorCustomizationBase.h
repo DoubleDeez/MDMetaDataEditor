@@ -3,6 +3,8 @@
 #pragma once
 
 #include "IDetailCustomization.h"
+#include "Input/Reply.h"
+#include "Layout/Visibility.h"
 #include "UObject/WeakFieldPtr.h"
 
 namespace ETextCommit
@@ -27,6 +29,9 @@ public:
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailLayout) override;
 
 private:
+	EVisibility GetRemoveMetaDataButtonVisibility(FName Key) const;
+	FReply OnRemoveMetaData(FName Key);
+
 	TSharedRef<SWidget> CreateMetaDataValueWidget(const FMDMetaDataKey& Key);
 
 	void AddMetaDataKey(const FName& Key);

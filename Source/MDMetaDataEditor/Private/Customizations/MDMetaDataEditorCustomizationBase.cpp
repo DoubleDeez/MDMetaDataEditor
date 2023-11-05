@@ -18,6 +18,7 @@
 #else
 #include "SGameplayTagWidget.h"
 #endif
+#include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Input/SEditableTextBox.h"
@@ -186,7 +187,7 @@ private:
 		{
 			TArray<FGameplayTag> GameplayTagArray;
 			GameplayTagContainer.GetGameplayTagArray(GameplayTagArray);
-			
+
 			FString Value;
 			for (const FGameplayTag& TagIt : GameplayTagArray)
 			{
@@ -336,8 +337,36 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			.ValueContent()
 			[
 				CreateMetaDataValueWidget(Key)
+			]
+			.ExtensionContent()
+			[
+				SNew(SButton)
+				.IsFocusable(false)
+				.ToolTipText(INVTEXT("Remove this meta data from this property"))
+				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+				.ContentPadding(0)
+				.Visibility(this, &FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility, Key.Key)
+				.OnClicked(this, &FMDMetaDataEditorCustomizationBase::OnRemoveMetaData, Key.Key)
+				.Content()
+				[
+					SNew(SImage)
+					.Image(FAppStyle::GetBrush("Icons.X"))
+					.ColorAndOpacity(FSlateColor::UseForeground())
+				]
 			];
 	}
+}
+
+EVisibility FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility(FName Key) const
+{
+	return HasMetaDataValue(Key) ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+FReply FMDMetaDataEditorCustomizationBase::OnRemoveMetaData(FName Key)
+{
+	RemoveMetaDataKey(Key);
+
+	return FReply::Handled();
 }
 
 TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidget(const FMDMetaDataKey& Key)
