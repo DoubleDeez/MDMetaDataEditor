@@ -44,6 +44,8 @@ private:
 	ECheckBoxState IsChecked(FName Key) const;
 	template<bool bIsBoolean>
 	void HandleChecked(ECheckBoxState State, FName Key);
+	template<bool bIsBoolean>
+	FText GetCheckBoxToolTip(FName Key) const;
 
 	FText GetMetaDataValueText(FName Key) const;
 	void OnMetaDataValueTextCommitted(const FText& NewText, ETextCommit::Type InTextCommit, FName Key);

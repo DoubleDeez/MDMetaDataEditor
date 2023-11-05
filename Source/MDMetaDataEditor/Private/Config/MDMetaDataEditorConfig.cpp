@@ -181,7 +181,7 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		UBlueprint::StaticClass(),
 		{
 			{
-				{ },
+				{ UEdGraphSchema_K2::PC_Wildcard },
 				{
 					{
 						{ TEXT("EditCondition"), EMDMetaDataEditorKeyType::String, TEXT("Enter a condition to determine whether or not this property can be edited. Supports Bools and Enums.") },
@@ -221,7 +221,7 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		UWidgetBlueprint::StaticClass(),
 		{
 			{
-				{ },
+				{ UEdGraphSchema_K2::PC_Wildcard },
 				{ { { TEXT("DesignerRebuild"), EMDMetaDataEditorKeyType::Flag, TEXT("When this property changes, the widget preview will be rebuilt.") } } }
 			}
 		}

@@ -116,6 +116,7 @@ public:
 			[
 				SNew(STextBlock)
 				.Text(this, &SMDMetaDataGameplayTagPicker::GetValue)
+				.Font(IDetailLayoutBuilder::GetDetailFont())
 			]
 			.MenuContent()
 			[
@@ -374,12 +375,14 @@ TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidge
 	if (Key.KeyType == EMDMetaDataEditorKeyType::Flag)
 	{
 		return SNew(SCheckBox)
+			.ToolTipText(this, &FMDMetaDataEditorCustomizationBase::GetCheckBoxToolTip<false>, Key.Key)
 			.IsChecked(this, &FMDMetaDataEditorCustomizationBase::IsChecked<false>, Key.Key)
 			.OnCheckStateChanged(this, &FMDMetaDataEditorCustomizationBase::HandleChecked<false>, Key.Key);
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::Boolean)
 	{
 		return SNew(SCheckBox)
+			.ToolTipText(this, &FMDMetaDataEditorCustomizationBase::GetCheckBoxToolTip<true>, Key.Key)
 			.IsChecked(this, &FMDMetaDataEditorCustomizationBase::IsChecked<true>, Key.Key)
 			.OnCheckStateChanged(this, &FMDMetaDataEditorCustomizationBase::HandleChecked<true>, Key.Key);
 	}
@@ -677,7 +680,13 @@ ECheckBoxState FMDMetaDataEditorCustomizationBase::IsChecked(FName Key) const
 
 	if constexpr (bIsBoolean)
 	{
-		return (Value.IsSet() && Value.GetValue().ToBool()) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+		// Don't assume unset == false, a meta data key could have different behaviour between the 2.
+		if (!Value.IsSet())
+		{
+			return ECheckBoxState::Undetermined;
+		}
+
+		return Value.GetValue().ToBool() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 	}
 	else
 	{
@@ -702,5 +711,21 @@ void FMDMetaDataEditorCustomizationBase::HandleChecked(ECheckBoxState State, FNa
 		{
 			RemoveMetaDataKey(Key);
 		}
+	}
+}
+
+template <bool bIsBoolean>
+FText FMDMetaDataEditorCustomizationBase::GetCheckBoxToolTip(FName Key) const
+{
+	switch (IsChecked<bIsBoolean>(Key))
+	{
+	case ECheckBoxState::Unchecked:
+		return bIsBoolean ? INVTEXT("False") : INVTEXT("Unset");
+	case ECheckBoxState::Checked:
+		return bIsBoolean ? INVTEXT("True") : INVTEXT("Set");
+	case ECheckBoxState::Undetermined:
+		return INVTEXT("Unset");
+	default:
+		return INVTEXT("Unhandled State");
 	}
 }

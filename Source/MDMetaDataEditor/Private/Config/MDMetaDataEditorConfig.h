@@ -10,6 +10,29 @@
 #include "MDMetaDataEditorConfig.generated.h"
 
 UENUM()
+enum class EMDMetaDataEditorKeyType : uint8
+{
+	// The meta data key is added or removed with a checkbox but doesn't have a value
+	Flag,
+	// The meta data value is set to true or false with a checkbox,
+	Boolean,
+	// The meta data value is a user-specified string
+	String,
+	// The meta data value is a user-specified integer
+	Integer,
+	// The meta data value is a user-specified floating point
+	Float,
+	// The meta data value is a user-specified Gameplay Tag
+	GameplayTag,
+	// The meta data value is one or more user-specified Gameplay Tags
+	GameplayTagContainer,
+	// TODO - The meta data value is a UStruct path
+	// Struct,
+	// TODO - The meta data value is a UClass path
+	// Class
+};
+
+UENUM()
 enum class EMDMetaDataPropertyContainerType : uint8
 {
 	None,
@@ -34,7 +57,7 @@ public:
 	bool DoesMatchProperty(const FProperty* Property) const;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
-	FName PropertyType = UEdGraphSchema_K2::PC_Wildcard;
+	FName PropertyType = NAME_None;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	FName PropertySubType = NAME_None;
@@ -70,29 +93,6 @@ public:
 		Hash = HashCombine(Hash, GetTypeHash(Key.ContainerType));
 		return Hash;
 	}
-};
-
-UENUM()
-enum class EMDMetaDataEditorKeyType : uint8
-{
-	// The meta data key is added or removed with a checkbox
-	Flag,
-	// The meta data value is set to true or false with a checkbox,
-	Boolean,
-	// The meta data value is a user-specified string
-	String,
-	// The meta data value is a user-specified integer
-	Integer,
-	// The meta data value is a user-specified floating point
-	Float,
-	// The meta data value is a user-specified Gameplay Tag
-	GameplayTag,
-	// The meta data value is one or more user-specified Gameplay Tags
-	GameplayTagContainer,
-	// TODO - The meta data value is a UStruct path
-	// Struct,
-	// TODO - The meta data value is a UClass path
-	// Class
 };
 
 USTRUCT()
