@@ -7,8 +7,6 @@ public class MDMetaDataEditor : ModuleRules
 	public MDMetaDataEditor(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		bUseUnity = false;
-		PCHUsage = PCHUsageMode.NoPCHs;
 
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
