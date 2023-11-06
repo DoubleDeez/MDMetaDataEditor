@@ -40,8 +40,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", meta = (ConfigRestartRequired = "true"))
 	bool bEnableMetaDataEditorForCustomEvents = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", DisplayName = "Enable Meta Data Editor For Collapsed Graphs", meta = (ConfigRestartRequired = "true"))
-	bool bEnableMetaDataEditorForTunnels = true;
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", DisplayName = "Enable Meta Data Editor for Collapsed Graphs", meta = (ConfigRestartRequired = "true"))
+	bool bEnableMetaDataEditorForTunnels = false;
 
 private:
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Keys", meta = (TitleProperty = "{Key} ({KeyType})"))

@@ -88,29 +88,29 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 	UPropertyWrapper* PropertyWrapper = Cast<UPropertyWrapper>(Obj);
 	if (FProperty* Prop = PropertyWrapper ? PropertyWrapper->GetProperty() : nullptr)
 	{
-		if (Prop->IsNative())
+		if (Prop->IsNative() || Prop->GetOwnerUObject() == nullptr)
 		{
 			return;
 		}
 
-		bIsReadOnly |= !FBlueprintEditorUtils::IsVariableCreatedByBlueprint(Blueprint, Prop);
+		bIsReadOnly |= !(Prop->GetOwnerUObject()->IsA<UFunction>()) && !FBlueprintEditorUtils::IsVariableCreatedByBlueprint(Blueprint, Prop);
 		PropertyBeingCustomized = Prop;
 		bIsProperty = true;
 	}
 	else if (UK2Node_FunctionEntry* Function = MDMDECB_Private::FindNode<UK2Node_FunctionEntry, false>(Obj))
 	{
 		FunctionBeingCustomized = Function;
-		bIsFunction= true;
+		bIsFunction = true;
 	}
 	else if (UK2Node_Tunnel* Tunnel = MDMDECB_Private::FindNode<UK2Node_Tunnel, true>(Obj))
 	{
 		TunnelBeingCustomized = Tunnel;
-		bIsFunction= true;
+		bIsFunction = true;
 	}
 	else if (UK2Node_CustomEvent* Event = MDMDECB_Private::FindNode<UK2Node_CustomEvent, false>(Obj))
 	{
 		EventBeingCustomized = Event;
-		bIsFunction= true;
+		bIsFunction = true;
 	}
 
 	// Put Meta Data above Default Value for Variables
