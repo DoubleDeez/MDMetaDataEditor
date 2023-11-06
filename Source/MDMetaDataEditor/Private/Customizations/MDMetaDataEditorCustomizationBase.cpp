@@ -237,27 +237,59 @@ TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidge
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::Integer)
 	{
-		return SNew(SNumericEntryBox<int32>)
-			.Font(IDetailLayoutBuilder::GetDetailFont())
-			.AllowSpin(Key.bAllowSlider)
-			.MinValue(Key.MinInt)
-			.MaxValue(Key.MaxInt)
-			.MinSliderValue(Key.MinSliderInt)
-			.MaxSliderValue(Key.MaxSliderInt)
-			.Value(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueInt, Key.Key)
-			.OnValueCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueIntCommitted, Key.Key);
+		// SNumericEntryBox doesn't show a background unless it has a value, so display a non-interactive one
+		return SNew(SOverlay)
+			+SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				SNew(SEditableTextBox)
+				.Font(IDetailLayoutBuilder::GetDetailFont())
+				.Visibility(EVisibility::HitTestInvisible)
+			]
+			+SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				SNew(SNumericEntryBox<int32>)
+				.Font(IDetailLayoutBuilder::GetDetailFont())
+				.AllowSpin(Key.bAllowSlider)
+				.MinValue(Key.MinInt)
+				.MaxValue(Key.MaxInt)
+				.MinSliderValue(Key.MinSliderInt)
+				.MaxSliderValue(Key.MaxSliderInt)
+				.UndeterminedString(INVTEXT("-"))
+				.Value(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueInt, Key.Key)
+				.OnValueCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueIntCommitted, Key.Key)
+			];
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::Float)
 	{
-		return SNew(SNumericEntryBox<float>)
-			.Font(IDetailLayoutBuilder::GetDetailFont())
-			.AllowSpin(Key.bAllowSlider)
-			.MinValue(Key.MinFloat)
-			.MaxValue(Key.MaxFloat)
-			.MinSliderValue(Key.MinSliderFloat)
-			.MaxSliderValue(Key.MaxSliderFloat)
-			.Value(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueFloat, Key.Key)
-			.OnValueCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueFloatCommitted, Key.Key);
+		// SNumericEntryBox doesn't show a background unless it has a value, so display a non-interactive one
+		return SNew(SOverlay)
+			+SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				SNew(SEditableTextBox)
+				.Font(IDetailLayoutBuilder::GetDetailFont())
+				.Visibility(EVisibility::HitTestInvisible)
+			]
+			+SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				SNew(SNumericEntryBox<float>)
+				.Font(IDetailLayoutBuilder::GetDetailFont())
+				.AllowSpin(Key.bAllowSlider)
+				.MinValue(Key.MinFloat)
+				.MaxValue(Key.MaxFloat)
+				.MinSliderValue(Key.MinSliderFloat)
+				.MaxSliderValue(Key.MaxSliderFloat)
+				.UndeterminedString(INVTEXT("-"))
+				.Value(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueFloat, Key.Key)
+				.OnValueCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueFloatCommitted, Key.Key)
+			];
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::GameplayTag)
 	{
@@ -279,7 +311,7 @@ TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidge
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::ValueList)
 	{
-		SNew(SMDMetaDataStringComboBox)
+		return SNew(SMDMetaDataStringComboBox)
 			.Key(Key.Key)
 			.ValueList(Key.ValueList)
 			.OnSetMetaData(this, &FMDMetaDataEditorCustomizationBase::SetMetaDataValue)

@@ -19,10 +19,10 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	TSoftClassPtr<UBlueprint> BlueprintType;
 
-	UPROPERTY(EditAnywhere, Config, Category = "Variable Meta Data Editor", meta = (ShowOnlyInnerProperties))
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	TMap<FMDMetaDataEditorPropertyType, FMDMetaDataKeyList> VariableMetaDataKeys;
 
-	UPROPERTY(EditAnywhere, Config, Category = "Function Meta Data Editor", meta = (ShowOnlyInnerProperties))
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	FMDMetaDataKeyList FunctionMetaDataKeys;
 };
 

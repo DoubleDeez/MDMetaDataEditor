@@ -103,6 +103,6 @@ struct FMDMetaDataKeyList
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (TitleProperty = "Key"))
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (TitleProperty = "{Key} ({KeyType})"))
 	TArray<FMDMetaDataKey> MetaDataKeys;
 };
