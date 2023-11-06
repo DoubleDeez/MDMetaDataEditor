@@ -7,175 +7,9 @@
 #include "GameplayTagContainer.h"
 #include "WidgetBlueprint.h"
 
-FEdGraphPinType FMDMetaDataEditorPropertyType::ToGraphPinType() const
-{
-	FEdGraphPinType PinType;
-	PinType.PinCategory = PropertyType;
-	PinType.PinSubCategory = PropertySubType;
-	PinType.PinSubCategoryObject = PropertySubTypeObject.LoadSynchronous();
-	PinType.PinSubCategoryMemberReference = PropertySubTypeMemberReference;
-
-	if (ValueType.IsValid())
-	{
-		PinType.PinValueType = ValueType.Get<FMDMetaDataEditorPropertyType>().ToGraphTerminalType();
-	}
-
-	switch (ContainerType)
-	{
-	case EMDMetaDataPropertyContainerType::None:
-		PinType.ContainerType = EPinContainerType::None;
-		break;
-	case EMDMetaDataPropertyContainerType::Array:
-		PinType.ContainerType = EPinContainerType::Array;
-		break;
-	case EMDMetaDataPropertyContainerType::Set:
-		PinType.ContainerType = EPinContainerType::Set;
-		break;
-	case EMDMetaDataPropertyContainerType::Map:
-		PinType.ContainerType = EPinContainerType::Map;
-		break;
-	}
-
-	return PinType;
-}
-
-FEdGraphTerminalType FMDMetaDataEditorPropertyType::ToGraphTerminalType() const
-{
-	FEdGraphTerminalType TerminalType;
-	TerminalType.TerminalCategory = PropertyType;
-	TerminalType.TerminalSubCategory = PropertySubType;
-	TerminalType.TerminalSubCategoryObject = PropertySubTypeObject.LoadSynchronous();
-
-	return TerminalType;
-}
-
-void FMDMetaDataEditorPropertyType::SetFromGraphPinType(const FEdGraphPinType& GraphPinType)
-{
-	PropertyType = GraphPinType.PinCategory;
-	PropertySubType = GraphPinType.PinSubCategory;
-	PropertySubTypeObject = GraphPinType.PinSubCategoryObject.Get();
-	PropertySubTypeMemberReference = GraphPinType.PinSubCategoryMemberReference;
-
-	if (!GraphPinType.PinValueType.TerminalCategory.IsNone())
-	{
-		ValueType = ValueType.Make<FMDMetaDataEditorPropertyType>();
-		ValueType.GetMutable<FMDMetaDataEditorPropertyType>().SetFromGraphTerminalType(GraphPinType.PinValueType);
-	}
-	else if (GraphPinType.ContainerType == EPinContainerType::Map)
-	{
-		ValueType = ValueType.Make<FMDMetaDataEditorPropertyType>();
-	}
-	else
-	{
-		ValueType.Reset();
-	}
-
-	switch (GraphPinType.ContainerType)
-	{
-	case EPinContainerType::None:
-		ContainerType = EMDMetaDataPropertyContainerType::None;
-		break;
-	case EPinContainerType::Array:
-		ContainerType = EMDMetaDataPropertyContainerType::Array;
-		break;
-	case EPinContainerType::Set:
-		ContainerType = EMDMetaDataPropertyContainerType::Set;
-		break;
-	case EPinContainerType::Map:
-		ContainerType = EMDMetaDataPropertyContainerType::Map;
-		break;
-	}
-}
-
-void FMDMetaDataEditorPropertyType::SetFromGraphTerminalType(const FEdGraphTerminalType& GraphTerminalType)
-{
-	PropertyType = GraphTerminalType.TerminalCategory;
-	PropertySubType = GraphTerminalType.TerminalSubCategory;
-	PropertySubTypeObject = GraphTerminalType.TerminalSubCategoryObject.Get();
-}
-
-bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property) const
-{
-	if (Property == nullptr)
-	{
-		return false;
-	}
-
-	const FProperty* EffectiveProp = Property;
-
-	if (ContainerType == EMDMetaDataPropertyContainerType::Array && !Property->IsA<FArrayProperty>())
-	{
-		const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property);
-		if (ArrayProperty == nullptr)
-		{
-			return false;
-		}
-
-		EffectiveProp = ArrayProperty->Inner;
-	}
-	else if (ContainerType == EMDMetaDataPropertyContainerType::Set && !Property->IsA<FSetProperty>())
-	{
-		const FSetProperty* SetProperty = CastField<FSetProperty>(Property);
-		if (SetProperty == nullptr)
-		{
-			return false;
-		}
-
-		EffectiveProp = SetProperty->ElementProp;
-	}
-	else if (ContainerType == EMDMetaDataPropertyContainerType::Map)
-	{
-		const FMapProperty* MapProperty = CastField<FMapProperty>(Property);
-		if (MapProperty == nullptr)
-		{
-			return false;
-		}
-
-		const FMDMetaDataEditorPropertyType* ValueTypePtr = ValueType.GetPtr<FMDMetaDataEditorPropertyType>();
-		if (ValueTypePtr == nullptr || !ValueTypePtr->DoesMatchProperty(MapProperty->ValueProp))
-		{
-			return false;
-		}
-
-		EffectiveProp = MapProperty->KeyProp;
-	}
-
-	if (PropertyType == UEdGraphSchema_K2::PC_Wildcard)
-	{
-		return true;
-	}
-
-	const UEdGraphSchema_K2* K2Schema = GetDefault<UEdGraphSchema_K2>();
-	FEdGraphPinType PinType;
-	if (!K2Schema->ConvertPropertyToPinType(EffectiveProp, PinType))
-	{
-		return false;
-	}
-
-	return PropertyType == PinType.PinCategory
-		&& PropertySubType == PinType.PinSubCategory
-		&& PropertySubTypeObject.Get() == PinType.PinSubCategoryObject
-		&& PropertySubTypeMemberReference == PinType.PinSubCategoryMemberReference;
-}
-
-bool FMDMetaDataEditorPropertyType::operator==(const FMDMetaDataEditorPropertyType& Other) const
-{
-	return PropertyType == Other.PropertyType
-		&& PropertySubType == Other.PropertySubType
-		&& PropertySubTypeObject == Other.PropertySubTypeObject
-		&& PropertySubTypeMemberReference == Other.PropertySubTypeMemberReference
-		&& ValueType == Other.ValueType
-		&& ContainerType == Other.ContainerType;
-}
-
-bool FMDMetaDataKey::operator==(const FMDMetaDataKey& Other) const
-{
-	return Key == Other.Key && KeyType == Other.KeyType;
-}
-
 UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 {
-	// Setup some useful defaults
+	// Setup some useful defaults, with some ugly code
 
 	BlueprintMetaDataConfigs.Add({
 		UBlueprint::StaticClass(),
@@ -185,7 +19,10 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 				{
 					{
 						{ TEXT("EditCondition"), EMDMetaDataEditorKeyType::String, TEXT("Enter a condition to determine whether or not this property can be edited. Supports Bools and Enums.") },
-						{ TEXT("EditConditionHides"), EMDMetaDataEditorKeyType::Flag, TEXT("If this property's EditCondition is false, it will be hidden.") }
+						{ TEXT("EditConditionHides"), EMDMetaDataEditorKeyType::Flag, TEXT("If this property's EditCondition is false, it will be hidden.") },
+						{ TEXT("DisplayAfter"), EMDMetaDataEditorKeyType::String, TEXT("In the details panel, this property will be displayed after the property specified here.") },
+						{ TEXT("DisplayPriority"), EMDMetaDataEditorKeyType::Integer, TEXT("The priority to display this property in the deatils panel, lower values are first.") },
+						{ TEXT("NoResetToDefault"), EMDMetaDataEditorKeyType::Flag, TEXT("If set, this property will never show the 'Reset to Default' arrow button.") },
 					}
 				}
 			},
@@ -194,8 +31,85 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 				{ { { TEXT("InlineEditConditionToggle"), EMDMetaDataEditorKeyType::Flag, TEXT("If this bool is an EditCondition for another property, it will be displayed inline.") } } }
 			},
 			{
-				{ UEdGraphSchema_K2::PC_Wildcard, NAME_None, nullptr, {}, FInstancedStruct::Make<FMDMetaDataEditorPropertyType>(), EMDMetaDataPropertyContainerType::Map },
+				{ UEdGraphSchema_K2::PC_Int },
+				{
+					{
+						{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, TEXT("Disables the click and drag functionality for setting the value of this property.") },
+						FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Integer, TEXT("How fast the value should change while dragging to set the value.") }.SetMinInt(1),
+						{ TEXT("Delta"), EMDMetaDataEditorKeyType::Integer, TEXT("How much to change the value by when dragging.") },
+						{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Integer, TEXT("Forces the property value to be a multiple of this value.") },
+						{ TEXT("ArrayClamp"), EMDMetaDataEditorKeyType::String, TEXT("Clamps the valid values that can be entered in the UI to be between 0 and the length of the array specified.") }
+					}
+				},
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Int64 },
+				{
+					{
+						{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, TEXT("Disables the click and drag functionality for setting the value of this property.") },
+						FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Integer, TEXT("How fast the value should change while dragging to set the value.") }.SetMinInt(1),
+						{ TEXT("Delta"), EMDMetaDataEditorKeyType::Integer, TEXT("How much to change the value by when dragging.") },
+						{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Integer, TEXT("Forces the property value to be a multiple of this value.") },
+						{ TEXT("ArrayClamp"), EMDMetaDataEditorKeyType::String, TEXT("Clamps the valid values that can be entered in the UI to be between 0 and the length of the array specified.") }
+					}
+				},
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Float },
+				{
+					{
+						{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, TEXT("Disables the click and drag functionality for setting the value of this property.") },
+						FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Float, TEXT("How fast the value should change while dragging to set the value.") }.SetMinFloat(1.f),
+						{ TEXT("Delta"), EMDMetaDataEditorKeyType::Float, TEXT("How much to change the value by when dragging.") },
+						{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Float, TEXT("Forces the property value to be a multiple of this value.") }
+					}
+				},
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Double },
+				{
+					{
+						{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, TEXT("Disables the click and drag functionality for setting the value of this property.") },
+						FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Float, TEXT("How fast the value should change while dragging to set the value.") }.SetMinFloat(1.f),
+						{ TEXT("Delta"), EMDMetaDataEditorKeyType::Float, TEXT("How much to change the value by when dragging.") },
+						{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Float, TEXT("Forces the property value to be a multiple of this value.") }
+					}
+				},
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Real },
+				{
+					{
+						{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, TEXT("Disables the click and drag functionality for setting the value of this property.") },
+						FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Float, TEXT("How fast the value should change while dragging to set the value.") }.SetMinFloat(1.f),
+						{ TEXT("Delta"), EMDMetaDataEditorKeyType::Float, TEXT("How much to change the value by when dragging.") },
+						{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Float, TEXT("Forces the property value to be a multiple of this value.") }
+					}
+				},
+			},
+			{
+				{ UEdGraphSchema_K2::PC_String },
+				{ { { TEXT("GetOptions"), EMDMetaDataEditorKeyType::String, TEXT("Specify a function that returns a list of Strings that are valid values for this property.") } } }
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Name },
+				{ { { TEXT("GetOptions"), EMDMetaDataEditorKeyType::String, TEXT("Specify a function that returns a list of Names that are valid values for this property.") } } }
+			},
+			{
+				FMDMetaDataEditorPropertyType{ UEdGraphSchema_K2::PC_Wildcard }.SetContainerType(EMDMetaDataPropertyContainerType::Array),
+				{ { { TEXT("NoElementDuplicate"), EMDMetaDataEditorKeyType::Flag, TEXT("Indicates that the duplicate icon should not be shown for entries of this array in the property panel.") } } }
+			},
+			{
+				FMDMetaDataEditorPropertyType{ UEdGraphSchema_K2::PC_Wildcard }.SetValueType({UEdGraphSchema_K2::PC_Wildcard}).SetContainerType(EMDMetaDataPropertyContainerType::Map),
 				{ { { TEXT("ForceInlineRow"), EMDMetaDataEditorKeyType::Flag, TEXT("Force the Key and Value of a TMap to display in the same row.") } } }
+			},
+			{
+				FMDMetaDataEditorPropertyType{ UEdGraphSchema_K2::PC_Struct }.SetContainerType(EMDMetaDataPropertyContainerType::Array),
+				{ { { TEXT("TitleProperty"), EMDMetaDataEditorKeyType::String, TEXT("Specify a child property or FText style format of child properties to use as the summary.") } } }
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Struct },
+				{ { { TEXT("ShowOnlyInnerProperties"), EMDMetaDataEditorKeyType::Flag, TEXT("Removes the struct layer in the details panel, directly displaying the child properties of the struct.") } } }
 			},
 			{
 				{ UEdGraphSchema_K2::PC_Struct, NAME_None, FGameplayTag::StaticStruct() },
@@ -207,12 +121,81 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 			},
 			{
 				{ UEdGraphSchema_K2::PC_Struct, NAME_None, FDataTableRowHandle::StaticStruct() },
-				{ { { TEXT("RowType"), EMDMetaDataEditorKeyType::String, TEXT("Limit the selection to a specific data table row struct type.") } } }
-			}
+				{
+					{
+						{ TEXT("RowType"), EMDMetaDataEditorKeyType::String, TEXT("Limit the selection to a specific data table row struct type.") },
+						{ TEXT("RequiredAssetDataTags"), EMDMetaDataEditorKeyType::String, TEXT("Limit the selection to data tables with matching asset data tags.") }
+					}
+				}
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Struct, NAME_None, TBaseStructure<FLinearColor>::Get() },
+				{ { { TEXT("HideAlphaChannel"), EMDMetaDataEditorKeyType::Flag, TEXT("Hide the alpha channel from the color picker.") } } }
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Struct, NAME_None, TBaseStructure<FColor>::Get() },
+				{ { { TEXT("HideAlphaChannel"), EMDMetaDataEditorKeyType::Flag, TEXT("Hide the alpha channel from the color picker.") } } }
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Object, NAME_None, UObject::StaticClass() },
+				{
+					{
+						{ TEXT("DisplayThumbnail"), EMDMetaDataEditorKeyType::Boolean, TEXT("Whether or not to display the asset thumbnail.") },
+						{ TEXT("NoClear"), EMDMetaDataEditorKeyType::Flag, TEXT("Prevent this propert from being clear/set to none.") }
+					}
+				}
+			},
+			{
+				{ UEdGraphSchema_K2::PC_SoftObject, NAME_None, UObject::StaticClass() },
+				{
+					{
+						{ TEXT("DisplayThumbnail"), EMDMetaDataEditorKeyType::Boolean, TEXT("Whether or not to display the asset thumbnail.") },
+						{ TEXT("NoClear"), EMDMetaDataEditorKeyType::Flag, TEXT("Prevent this propert from being clear/set to none.") }
+					}
+				}
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Class, NAME_None, UObject::StaticClass() },
+				{
+					{
+						{ TEXT("DisplayThumbnail"), EMDMetaDataEditorKeyType::Boolean, TEXT("Whether or not to display the asset thumbnail.") },
+						{ TEXT("NoClear"), EMDMetaDataEditorKeyType::Flag, TEXT("Prevent this propert from being clear/set to none.") }
+					}
+				}
+			},
+			{
+				{ UEdGraphSchema_K2::PC_SoftClass, NAME_None, UObject::StaticClass() },
+				{
+					{
+						{ TEXT("DisplayThumbnail"), EMDMetaDataEditorKeyType::Boolean, TEXT("Whether or not to display the asset thumbnail.") },
+						{ TEXT("NoClear"), EMDMetaDataEditorKeyType::Flag, TEXT("Prevent this propert from being clear/set to none.") }
+					}
+				}
+			},
+			{
+				{ UEdGraphSchema_K2::PC_Object, NAME_None, UDataTable::StaticClass() },
+				{
+					{
+						{ TEXT("RowType"), EMDMetaDataEditorKeyType::String, TEXT("Limit the selection to a specific data table row struct type.") },
+						{ TEXT("RequiredAssetDataTags"), EMDMetaDataEditorKeyType::String, TEXT("Limit the selection to data tables with matching asset data tags.") }
+					}
+				}
+			},
+			{
+				{ UEdGraphSchema_K2::PC_SoftObject, NAME_None, UDataTable::StaticClass() },
+				{
+					{
+						{ TEXT("RowType"), EMDMetaDataEditorKeyType::String, TEXT("Limit the selection to a specific data table row struct type.") },
+						{ TEXT("RequiredAssetDataTags"), EMDMetaDataEditorKeyType::String, TEXT("Limit the selection to data tables with matching asset data tags.") }
+					}
+				}
+			},
 		},
 		{
 			{
-				{ TEXT("DefaultToSelf"), EMDMetaDataEditorKeyType::String, TEXT("Specify which function parameter should default to \"self\".") }
+				{ TEXT("DefaultToSelf"), EMDMetaDataEditorKeyType::String, TEXT("Specify which function parameter should default to \"self\".") },
+				{ TEXT("DevelopmentOnly"), EMDMetaDataEditorKeyType::Flag, TEXT("Only allow this function to run in Development Mode.") },
+				{ TEXT("BlueprintAutocast"), EMDMetaDataEditorKeyType::Flag, TEXT("For Pure Blueprint Function Library functions, indicate that this function can be used to automatically cast between the first and return type.") }
 			}
 		}
 	});

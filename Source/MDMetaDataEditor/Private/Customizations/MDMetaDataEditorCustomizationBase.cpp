@@ -16,6 +16,7 @@
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SNumericEntryBox.h"
 #include "Widgets/SMDMetaDataGameplayTagPicker.h"
+#include "Widgets/SMDMetaDataStringComboBox.h"
 #include "Widgets/Text/STextBlock.h"
 
 namespace MDMDECB_Private
@@ -237,6 +238,7 @@ TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidge
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::Integer)
 	{
 		return SNew(SNumericEntryBox<int32>)
+			.Font(IDetailLayoutBuilder::GetDetailFont())
 			.AllowSpin(Key.bAllowSlider)
 			.MinValue(Key.MinInt)
 			.MaxValue(Key.MaxInt)
@@ -248,6 +250,7 @@ TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidge
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::Float)
 	{
 		return SNew(SNumericEntryBox<float>)
+			.Font(IDetailLayoutBuilder::GetDetailFont())
 			.AllowSpin(Key.bAllowSlider)
 			.MinValue(Key.MinFloat)
 			.MaxValue(Key.MaxFloat)
@@ -271,6 +274,14 @@ TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidge
 			.Key(Key.Key)
 			.bMultiSelect(true)
 			.OnRemoveMetaData(this, &FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey)
+			.OnSetMetaData(this, &FMDMetaDataEditorCustomizationBase::SetMetaDataValue)
+			.MetaDataValue(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValue, Key.Key);
+	}
+	else if (Key.KeyType == EMDMetaDataEditorKeyType::ValueList)
+	{
+		SNew(SMDMetaDataStringComboBox)
+			.Key(Key.Key)
+			.ValueList(Key.ValueList)
 			.OnSetMetaData(this, &FMDMetaDataEditorCustomizationBase::SetMetaDataValue)
 			.MetaDataValue(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValue, Key.Key);
 	}

@@ -16,12 +16,34 @@ class FMDMetaDataEditorModule : public IModuleInterface
 public:
 	virtual void StartupModule() override
 	{
+		const UMDMetaDataEditorConfig* Config = GetDefault<UMDMetaDataEditorConfig>();
+
 		FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
-		VariableCustomizationHandle = BlueprintEditorModule.RegisterVariableCustomization(FProperty::StaticClass(), FOnGetVariableCustomizationInstance::CreateStatic(&FMDMetaDataEditorVariableCustomization::MakeInstance));
-		LocalVariableCustomizationHandle = BlueprintEditorModule.RegisterLocalVariableCustomization(FProperty::StaticClass(), FOnGetVariableCustomizationInstance::CreateStatic(&FMDMetaDataEditorVariableCustomization::MakeInstance));
-		FunctionCustomizationHandle = BlueprintEditorModule.RegisterFunctionCustomization(UK2Node_FunctionEntry::StaticClass(), FOnGetFunctionCustomizationInstance::CreateStatic(&FMDMetaDataEditorFunctionCustomization::MakeInstance));
-		TunnelCustomizationHandle = BlueprintEditorModule.RegisterFunctionCustomization(UK2Node_Tunnel::StaticClass(), FOnGetFunctionCustomizationInstance::CreateStatic(&FMDMetaDataEditorFunctionCustomization::MakeInstance));
-		EventCustomizationHandle = BlueprintEditorModule.RegisterFunctionCustomization(UK2Node_CustomEvent::StaticClass(), FOnGetFunctionCustomizationInstance::CreateStatic(&FMDMetaDataEditorFunctionCustomization::MakeInstance));
+
+		if (Config->bEnableMetaDataEditorForVariables)
+		{
+			VariableCustomizationHandle = BlueprintEditorModule.RegisterVariableCustomization(FProperty::StaticClass(), FOnGetVariableCustomizationInstance::CreateStatic(&FMDMetaDataEditorVariableCustomization::MakeInstance));
+		}
+
+		if (Config->bEnableMetaDataEditorForLocalVariables)
+		{
+			LocalVariableCustomizationHandle = BlueprintEditorModule.RegisterLocalVariableCustomization(FProperty::StaticClass(), FOnGetVariableCustomizationInstance::CreateStatic(&FMDMetaDataEditorVariableCustomization::MakeInstance));
+		}
+
+		if (Config->bEnableMetaDataEditorForFunctions)
+		{
+			FunctionCustomizationHandle = BlueprintEditorModule.RegisterFunctionCustomization(UK2Node_FunctionEntry::StaticClass(), FOnGetFunctionCustomizationInstance::CreateStatic(&FMDMetaDataEditorFunctionCustomization::MakeInstance));
+		}
+
+		if (Config->bEnableMetaDataEditorForTunnels)
+		{
+			TunnelCustomizationHandle = BlueprintEditorModule.RegisterFunctionCustomization(UK2Node_Tunnel::StaticClass(), FOnGetFunctionCustomizationInstance::CreateStatic(&FMDMetaDataEditorFunctionCustomization::MakeInstance));
+		}
+
+		if (Config->bEnableMetaDataEditorForCustomEvents)
+		{
+			EventCustomizationHandle = BlueprintEditorModule.RegisterFunctionCustomization(UK2Node_CustomEvent::StaticClass(), FOnGetFunctionCustomizationInstance::CreateStatic(&FMDMetaDataEditorFunctionCustomization::MakeInstance));
+		}
 
 		FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyEditorModule.RegisterCustomPropertyTypeLayout(FMDMetaDataEditorPropertyType::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDMetaDataEditorPropertyTypeCustomization::MakeInstance));
