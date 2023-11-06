@@ -5,11 +5,16 @@
 #include "IDetailCustomization.h"
 #include "Input/Reply.h"
 #include "Layout/Visibility.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "UObject/WeakFieldPtr.h"
 
 namespace ETextCommit
 {
+#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 2
 	enum Type : int;
+#else
+	enum Type;
+#endif
 }
 
 class IBlueprintEditor;
