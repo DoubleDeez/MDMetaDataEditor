@@ -5,7 +5,6 @@
 #include "Customizations/MDMetaDataEditorFunctionCustomization.h"
 #include "Customizations/MDMetaDataEditorPropertyTypeCustomization.h"
 #include "Customizations/MDMetaDataEditorVariableCustomization.h"
-#include "Customizations/MDMetaDataKeyListCustomization.h"
 #include "K2Node_CustomEvent.h"
 #include "K2Node_FunctionEntry.h"
 #include "K2Node_Tunnel.h"
@@ -48,7 +47,6 @@ public:
 
 		FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyEditorModule.RegisterCustomPropertyTypeLayout(FMDMetaDataEditorPropertyType::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDMetaDataEditorPropertyTypeCustomization::MakeInstance));
-		PropertyEditorModule.RegisterCustomPropertyTypeLayout(FMDMetaDataKeyList::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDMetaDataKeyListCustomization::MakeInstance));
 	}
 
 	virtual void ShutdownModule() override
@@ -65,7 +63,6 @@ public:
 		if (FPropertyEditorModule* PropertyEditorModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
 		{
 			PropertyEditorModule->UnregisterCustomPropertyTypeLayout(FMDMetaDataEditorPropertyType::StaticStruct()->GetFName());
-			PropertyEditorModule->UnregisterCustomPropertyTypeLayout(FMDMetaDataKeyList::StaticStruct()->GetFName());
 		}
 	}
 

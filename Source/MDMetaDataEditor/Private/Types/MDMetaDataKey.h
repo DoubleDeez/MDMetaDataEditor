@@ -2,7 +2,11 @@
 
 #pragma once
 
+#include "EdGraphSchema_K2.h"
+#include "Engine/Blueprint.h"
 #include "Math/NumericLimits.h"
+#include "MDMetaDataEditorPropertyType.h"
+
 #include "MDMetaDataKey.generated.h"
 
 UENUM()
@@ -45,6 +49,25 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	FString Description;
 
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	TSet<TSoftClassPtr<UBlueprint>> SupportedBlueprints = { UBlueprint::StaticClass() };
+	FMDMetaDataKey& ClearSupportedBlueprints() { SupportedBlueprints.Reset(); return *this; }
+	FMDMetaDataKey& AddSupportedBlueprint(TSoftClassPtr<UBlueprint>&& InSupportedBlueprint) { SupportedBlueprints.Emplace(MoveTemp(InSupportedBlueprint)); return *this; }
+	FMDMetaDataKey& SetSupportedBlueprint(TSoftClassPtr<UBlueprint>&& InSupportedBlueprint) { ClearSupportedBlueprints().AddSupportedBlueprint(MoveTemp(InSupportedBlueprint)); return *this; }
+	FMDMetaDataKey& SetSupportedBlueprints(const TSet<TSoftClassPtr<UBlueprint>>& InSupportedBlueprints) { SupportedBlueprints = InSupportedBlueprints; return *this; }
+
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	TSet<FMDMetaDataEditorPropertyType> SupportedPropertyTypes = { { UEdGraphSchema_K2::PC_Wildcard } };
+	FMDMetaDataKey& ClearSupportedProperties() { SupportedPropertyTypes.Reset(); return *this; }
+	FMDMetaDataKey& AddSupportedProperty(FMDMetaDataEditorPropertyType&& InSupportedProperty) { SupportedPropertyTypes.Emplace(MoveTemp(InSupportedProperty)); return *this; }
+	FMDMetaDataKey& SetSupportedProperty(FMDMetaDataEditorPropertyType&& InSupportedProperty) { ClearSupportedProperties().AddSupportedProperty(MoveTemp(InSupportedProperty)); return *this; }
+	FMDMetaDataKey& SetSupportedProperties(const TSet<FMDMetaDataEditorPropertyType>& InSupportedProperties) { SupportedPropertyTypes = InSupportedProperties; return *this; }
+
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	bool bCanBeUsedByFunctions = false;
+	FMDMetaDataKey& CanBeUsedByFunctions(bool InCanBeUsedByFunctions) { bCanBeUsedByFunctions = InCanBeUsedByFunctions; return *this; }
+	FMDMetaDataKey& SetFunctionsOnly() { bCanBeUsedByFunctions = true; ClearSupportedProperties(); return *this; }
+
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (EditConditionHides, EditCondition = "KeyType == EMDMetaDataEditorKeyType::Integer || KeyType == EMDMetaDataEditorKeyType::Float"))
 	bool bAllowSlider = true;
 	FMDMetaDataKey& AllowSlider(bool InAllowSlider) { bAllowSlider = InAllowSlider; return *this; }
@@ -85,6 +108,9 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (EditConditionHides, EditCondition = "KeyType == EMDMetaDataEditorKeyType::ValueList"))
 	TArray<FString> ValueList;
 
+	bool DoesSupportBlueprint(const UBlueprint* Blueprint) const;
+	bool DoesSupportProperty(const FProperty* Property) const;
+
 	bool operator==(const FMDMetaDataKey& Other) const;
 	bool operator!=(const FMDMetaDataKey& Other) const
 	{
@@ -95,14 +121,4 @@ public:
 	{
 		return HashCombine(GetTypeHash(Key.Key), GetTypeHash(Key.KeyType));
 	}
-};
-
-USTRUCT()
-struct FMDMetaDataKeyList
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (TitleProperty = "{Key} ({KeyType})"))
-	TArray<FMDMetaDataKey> MetaDataKeys;
 };

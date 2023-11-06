@@ -61,8 +61,10 @@ FMDMetaDataEditorCustomizationBase::FMDMetaDataEditorCustomizationBase(const TWe
 
 void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
-	PropertiesBeingCustomized.Reset();
-	FunctionsBeingCustomized.Reset();
+	PropertyBeingCustomized.Reset();
+	FunctionBeingCustomized.Reset();
+	TunnelBeingCustomized.Reset();
+	EventBeingCustomized.Reset();
 
 	UBlueprint* Blueprint = BlueprintPtr.Get();
 	if (!IsValid(Blueprint))
@@ -74,98 +76,49 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 
 	TArray<TWeakObjectPtr<UObject>> ObjectsBeingCustomized;
 	DetailLayout.GetObjectsBeingCustomized(ObjectsBeingCustomized);
-	if (ObjectsBeingCustomized.Num() > 0)
+	if (ObjectsBeingCustomized.Num() != 1)
 	{
-		for (TWeakObjectPtr<UObject>& Obj : ObjectsBeingCustomized)
-		{
-			UPropertyWrapper* PropertyWrapper = Cast<UPropertyWrapper>(Obj.Get());
-			if (FProperty* PropertyBeingCustomized = PropertyWrapper ? PropertyWrapper->GetProperty() : nullptr)
-			{
-				if (PropertyBeingCustomized->IsNative())
-				{
-					continue;
-				}
-
-				bIsReadOnly |= !FBlueprintEditorUtils::IsVariableCreatedByBlueprint(Blueprint, PropertyBeingCustomized);
-				PropertiesBeingCustomized.Emplace(PropertyBeingCustomized);
-			}
-			else if (UK2Node_FunctionEntry* Function = MDMDECB_Private::FindNode<UK2Node_FunctionEntry, false>(Obj.Get()))
-			{
-				FunctionsBeingCustomized.Emplace(Function);
-			}
-			else if (UK2Node_Tunnel* Tunnel = MDMDECB_Private::FindNode<UK2Node_Tunnel, true>(Obj.Get()))
-			{
-				TunnelsBeingCustomized.Emplace(Tunnel);
-			}
-			else if (UK2Node_CustomEvent* Event = MDMDECB_Private::FindNode<UK2Node_CustomEvent, false>(Obj.Get()))
-			{
-				EventsBeingCustomized.Emplace(Event);
-			}
-		}
+		return;
 	}
 
-	// Populate the set of meta data keys to display, only display the keys in-common with all the selected fields
-	TSet<FMDMetaDataKey> MetaDataKeys;
+	bool bIsFunction = false;
+	bool bIsProperty = false;
+
+	UObject* Obj = ObjectsBeingCustomized[0].Get();
+	UPropertyWrapper* PropertyWrapper = Cast<UPropertyWrapper>(Obj);
+	if (FProperty* Prop = PropertyWrapper ? PropertyWrapper->GetProperty() : nullptr)
 	{
-		const UMDMetaDataEditorConfig* MetaDataConfig = GetDefault<UMDMetaDataEditorConfig>();
-
-		for (const TWeakFieldPtr<FProperty>& PropertyPtr : PropertiesBeingCustomized)
+		if (Prop->IsNative())
 		{
-			TSet<FMDMetaDataKey> PropMetaDataKeys;
-
-			MetaDataConfig->ForEachVariableMetaDataKey(Blueprint, PropertyPtr.Get(), [&PropMetaDataKeys](const FMDMetaDataKey& Key)
-			{
-				PropMetaDataKeys.Add(Key);
-			});
-
-			if (MetaDataKeys.IsEmpty())
-			{
-				MetaDataKeys = PropMetaDataKeys;
-			}
-			else
-			{
-				MetaDataKeys = MetaDataKeys.Intersect(PropMetaDataKeys);
-			}
+			return;
 		}
 
-		auto GatherFunctionKeys = [&MetaDataKeys, Blueprint, MetaDataConfig](const auto& NodeArray)
-		{
-			for (const auto& NodePtr : NodeArray)
-			{
-				TSet<FMDMetaDataKey> FuncMetaDataKeys;
-
-				MetaDataConfig->ForEachFunctionMetaDataKey(Blueprint, [&FuncMetaDataKeys](const FMDMetaDataKey& Key)
-				{
-					FuncMetaDataKeys.Add(Key);
-				});
-
-				if (MetaDataKeys.IsEmpty())
-				{
-					MetaDataKeys = FuncMetaDataKeys;
-				}
-				else
-				{
-					MetaDataKeys = MetaDataKeys.Intersect(FuncMetaDataKeys);
-				}
-			}
-		};
-
-		GatherFunctionKeys(FunctionsBeingCustomized);
-		GatherFunctionKeys(TunnelsBeingCustomized);
-		GatherFunctionKeys(EventsBeingCustomized);
+		bIsReadOnly |= !FBlueprintEditorUtils::IsVariableCreatedByBlueprint(Blueprint, Prop);
+		PropertyBeingCustomized = Prop;
+		bIsProperty = true;
+	}
+	else if (UK2Node_FunctionEntry* Function = MDMDECB_Private::FindNode<UK2Node_FunctionEntry, false>(Obj))
+	{
+		FunctionBeingCustomized = Function;
+		bIsFunction= true;
+	}
+	else if (UK2Node_Tunnel* Tunnel = MDMDECB_Private::FindNode<UK2Node_Tunnel, true>(Obj))
+	{
+		TunnelBeingCustomized = Tunnel;
+		bIsFunction= true;
+	}
+	else if (UK2Node_CustomEvent* Event = MDMDECB_Private::FindNode<UK2Node_CustomEvent, false>(Obj))
+	{
+		EventBeingCustomized = Event;
+		bIsFunction= true;
 	}
 
+	// Put Meta Data above Default Value for Variables
 	const int32 MetaDataSortOrder = DetailLayout.EditCategory("Variable").GetSortOrder() + 1;
 	DetailLayout.EditCategory("MetaData").SetSortOrder(MetaDataSortOrder);
 	DetailLayout.EditCategory("DefaultValue").SetSortOrder(MetaDataSortOrder + 1);
 
-	TArray<FMDMetaDataKey> MetaDataKeysSorted = MetaDataKeys.Array();
-	MetaDataKeysSorted.Sort([](const FMDMetaDataKey& A, const FMDMetaDataKey& B)
-	{
-		return A.Key.Compare(B.Key) < 0;
-	});
-
-	for (const FMDMetaDataKey& Key : MetaDataKeysSorted)
+	auto AddMetaDataKey = [this, &DetailLayout, bIsReadOnly](const FMDMetaDataKey& Key)
 	{
 		DetailLayout.EditCategory("MetaData")
 			.AddCustomRow(FText::FromName(Key.Key))
@@ -197,6 +150,16 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 					.ColorAndOpacity(FSlateColor::UseForeground())
 				]
 			];
+	};
+
+	const UMDMetaDataEditorConfig* Config = GetDefault<UMDMetaDataEditorConfig>();
+	if (bIsProperty)
+	{
+		Config->ForEachVariableMetaDataKey(Blueprint, PropertyBeingCustomized.Get(), AddMetaDataKey);
+	}
+	else if (bIsFunction)
+	{
+		Config->ForEachFunctionMetaDataKey(Blueprint, AddMetaDataKey);
 	}
 }
 
@@ -330,52 +293,38 @@ void FMDMetaDataEditorCustomizationBase::SetMetaDataValue(const FName& Key, cons
 {
 	if (UBlueprint* Blueprint = BlueprintPtr.Get())
 	{
-		for (TWeakFieldPtr<FProperty>& WeakProperty : PropertiesBeingCustomized)
+		if (FProperty* Property = PropertyBeingCustomized.Get())
 		{
-			if (FProperty* Property = WeakProperty.Get())
+			for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
 			{
-				for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
+				if (VariableDescription.VarName == Property->GetFName())
 				{
-					if (VariableDescription.VarName == Property->GetFName())
-					{
-						Property->SetMetaData(Key, FString(Value));
-						VariableDescription.SetMetaData(Key, Value);
-					}
+					Property->SetMetaData(Key, FString(Value));
+					VariableDescription.SetMetaData(Key, Value);
 				}
 			}
 		}
 	}
 
-	auto UpdateMetaData = [&Value, Key](const auto& NodeArray)
+	FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
+
+	if (UK2Node_FunctionEntry* TypedEntryNode = FunctionBeingCustomized.Get())
 	{
-		for (const auto& NodePtr : NodeArray)
-		{
-			FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
+		MetaData = &(TypedEntryNode->MetaData);
+	}
+	else if (UK2Node_Tunnel* TunnelNode = TunnelBeingCustomized.Get())
+	{
+		MetaData = &(TunnelNode->MetaData);
+	}
+	else if (UK2Node_CustomEvent* EventNode = EventBeingCustomized.Get())
+	{
+		MetaData = &(EventNode->GetUserDefinedMetaData());
+	}
 
-			UK2Node_EditablePinBase* FunctionEntryNode = NodePtr.Get();
-			if (UK2Node_FunctionEntry* TypedEntryNode = Cast<UK2Node_FunctionEntry>(FunctionEntryNode))
-			{
-				MetaData = &(TypedEntryNode->MetaData);
-			}
-			else if (UK2Node_Tunnel* TunnelNode = Cast<UK2Node_Tunnel>(FunctionEntryNode))
-			{
-				MetaData = &(TunnelNode->MetaData);
-			}
-			else if (UK2Node_CustomEvent* EventNode = Cast<UK2Node_CustomEvent>(FunctionEntryNode))
-			{
-				MetaData = &(EventNode->GetUserDefinedMetaData());
-			}
-
-			if (MetaData != nullptr)
-			{
-				MetaData->SetMetaData(Key, FString(Value));
-			}
-		}
-	};
-
-	UpdateMetaData(FunctionsBeingCustomized);
-	UpdateMetaData(TunnelsBeingCustomized);
-	UpdateMetaData(EventsBeingCustomized);
+	if (MetaData != nullptr)
+	{
+		MetaData->SetMetaData(Key, FString(Value));
+	}
 
 	FBlueprintEditorUtils::MarkBlueprintAsModified(BlueprintPtr.Get());
 }
@@ -389,63 +338,47 @@ TOptional<FString> FMDMetaDataEditorCustomizationBase::GetMetaDataValue(FName Ke
 {
 	TOptional<FString> Value;
 
-	for (const TWeakFieldPtr<FProperty>& PropertyPtr : PropertiesBeingCustomized)
+	if (const FProperty* Prop = PropertyBeingCustomized.Get())
 	{
-		if (const FProperty* Prop = PropertyPtr.Get())
+		if (Prop->HasMetaData(Key))
 		{
-			if (Prop->HasMetaData(Key))
+			if (!Value.IsSet())
 			{
-				if (!Value.IsSet())
-				{
-					Value = Prop->GetMetaData(Key);
-				}
-				else if (Value.GetValue() != Prop->GetMetaData(Key))
-				{
-					Value = MDMDECB_Private::MultipleValues;
-					return Value;
-				}
+				Value = Prop->GetMetaData(Key);
+			}
+			else if (Value.GetValue() != Prop->GetMetaData(Key))
+			{
+				return MDMDECB_Private::MultipleValues;
 			}
 		}
 	}
 
-	auto GetMetaDataValue = [&Value, Key](const auto& NodeArray)
+	const FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
+
+	if (const UK2Node_FunctionEntry* TypedEntryNode = Cast<UK2Node_FunctionEntry>(FunctionBeingCustomized.Get()))
 	{
-		for (const auto& NodePtr : NodeArray)
+		MetaData = &(TypedEntryNode->MetaData);
+	}
+	else if (const UK2Node_Tunnel* TunnelNode = Cast<UK2Node_Tunnel>(TunnelBeingCustomized.Get()))
+	{
+		MetaData = &(TunnelNode->MetaData);
+	}
+	else if (UK2Node_CustomEvent* EventNode = Cast<UK2Node_CustomEvent>(EventBeingCustomized.Get()))
+	{
+		MetaData = &(EventNode->GetUserDefinedMetaData());
+	}
+
+	if (MetaData != nullptr && MetaData->HasMetaData(Key))
+	{
+		if (!Value.IsSet())
 		{
-			const FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
-
-			UK2Node_EditablePinBase* FunctionEntryNode = NodePtr.Get();
-			if (const UK2Node_FunctionEntry* TypedEntryNode = Cast<UK2Node_FunctionEntry>(FunctionEntryNode))
-			{
-				MetaData = &(TypedEntryNode->MetaData);
-			}
-			else if (const UK2Node_Tunnel* TunnelNode = Cast<UK2Node_Tunnel>(FunctionEntryNode))
-			{
-				MetaData = &(TunnelNode->MetaData);
-			}
-			else if (UK2Node_CustomEvent* EventNode = Cast<UK2Node_CustomEvent>(FunctionEntryNode))
-			{
-				MetaData = &(EventNode->GetUserDefinedMetaData());
-			}
-
-			if (MetaData != nullptr && MetaData->HasMetaData(Key))
-			{
-				if (!Value.IsSet())
-				{
-					Value = MetaData->GetMetaData(Key);
-				}
-				else if (Value.GetValue() != MetaData->GetMetaData(Key))
-				{
-					Value = MDMDECB_Private::MultipleValues;
-					return;
-				}
-			}
+			Value = MetaData->GetMetaData(Key);
 		}
-	};
-
-	GetMetaDataValue(FunctionsBeingCustomized);
-	GetMetaDataValue(TunnelsBeingCustomized);
-	GetMetaDataValue(EventsBeingCustomized);
+		else if (Value.GetValue() != MetaData->GetMetaData(Key))
+		{
+			return MDMDECB_Private::MultipleValues;
+		}
+	}
 
 	return Value;
 }
@@ -454,52 +387,38 @@ void FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey(const FName& Key)
 {
 	if (UBlueprint* Blueprint = BlueprintPtr.Get())
 	{
-		for (TWeakFieldPtr<FProperty>& WeakProperty : PropertiesBeingCustomized)
+		if (FProperty* Property = PropertyBeingCustomized.Get())
 		{
-			if (FProperty* Property = WeakProperty.Get())
+			for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
 			{
-				for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
+				if (VariableDescription.VarName == Property->GetFName())
 				{
-					if (VariableDescription.VarName == Property->GetFName())
-					{
-						Property->RemoveMetaData(Key);
-						VariableDescription.RemoveMetaData(Key);
-					}
+					Property->RemoveMetaData(Key);
+					VariableDescription.RemoveMetaData(Key);
 				}
 			}
 		}
 	}
 
-	auto UpdateMetaData = [Key](const auto& NodeArray)
+	FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
+
+	if (UK2Node_FunctionEntry* TypedEntryNode = Cast<UK2Node_FunctionEntry>(FunctionBeingCustomized.Get()))
 	{
-		for (const auto& NodePtr : NodeArray)
-		{
-			FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
+		MetaData = &(TypedEntryNode->MetaData);
+	}
+	else if (UK2Node_Tunnel* TunnelNode = Cast<UK2Node_Tunnel>(TunnelBeingCustomized.Get()))
+	{
+		MetaData = &(TunnelNode->MetaData);
+	}
+	else if (UK2Node_CustomEvent* EventNode = Cast<UK2Node_CustomEvent>(EventBeingCustomized.Get()))
+	{
+		MetaData = &(EventNode->GetUserDefinedMetaData());
+	}
 
-			UK2Node_EditablePinBase* FunctionEntryNode = NodePtr.Get();
-			if (UK2Node_FunctionEntry* TypedEntryNode = Cast<UK2Node_FunctionEntry>(FunctionEntryNode))
-			{
-				MetaData = &(TypedEntryNode->MetaData);
-			}
-			else if (UK2Node_Tunnel* TunnelNode = Cast<UK2Node_Tunnel>(FunctionEntryNode))
-			{
-				MetaData = &(TunnelNode->MetaData);
-			}
-			else if (UK2Node_CustomEvent* EventNode = Cast<UK2Node_CustomEvent>(FunctionEntryNode))
-			{
-				MetaData = &(EventNode->GetUserDefinedMetaData());
-			}
-
-			if (MetaData != nullptr)
-			{
-				MetaData->RemoveMetaData(Key);
-			}
-		}
-	};
-
-	UpdateMetaData(FunctionsBeingCustomized);
-	UpdateMetaData(TunnelsBeingCustomized);
-	UpdateMetaData(EventsBeingCustomized);
+	if (MetaData != nullptr)
+	{
+		MetaData->RemoveMetaData(Key);
+	}
 
 	FBlueprintEditorUtils::MarkBlueprintAsModified(BlueprintPtr.Get());
 }

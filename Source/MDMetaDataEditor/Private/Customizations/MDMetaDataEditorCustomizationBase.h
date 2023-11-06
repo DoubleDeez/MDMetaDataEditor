@@ -59,8 +59,8 @@ private:
 	TWeakPtr<IBlueprintEditor> BlueprintEditor;
 	TWeakObjectPtr<UBlueprint> BlueprintPtr;
 
-	TArray<TWeakFieldPtr<FProperty>> PropertiesBeingCustomized;
-	TArray<TWeakObjectPtr<UK2Node_FunctionEntry>> FunctionsBeingCustomized;
-	TArray<TWeakObjectPtr<UK2Node_Tunnel>> TunnelsBeingCustomized;
-	TArray<TWeakObjectPtr<UK2Node_CustomEvent>> EventsBeingCustomized;
+	TWeakFieldPtr<FProperty> PropertyBeingCustomized;
+	TWeakObjectPtr<UK2Node_FunctionEntry> FunctionBeingCustomized;
+	TWeakObjectPtr<UK2Node_Tunnel> TunnelBeingCustomized;
+	TWeakObjectPtr<UK2Node_CustomEvent> EventBeingCustomized;
 };

@@ -103,7 +103,7 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 
 	const FProperty* EffectiveProp = Property;
 
-	if (ContainerType == EMDMetaDataPropertyContainerType::Array && !Property->IsA<FArrayProperty>())
+	if (ContainerType == EMDMetaDataPropertyContainerType::Array || Property->IsA<FArrayProperty>())
 	{
 		const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property);
 		if (ArrayProperty == nullptr)
@@ -113,7 +113,7 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 
 		EffectiveProp = ArrayProperty->Inner;
 	}
-	else if (ContainerType == EMDMetaDataPropertyContainerType::Set && !Property->IsA<FSetProperty>())
+	else if (ContainerType == EMDMetaDataPropertyContainerType::Set || Property->IsA<FSetProperty>())
 	{
 		const FSetProperty* SetProperty = CastField<FSetProperty>(Property);
 		if (SetProperty == nullptr)
@@ -123,7 +123,7 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 
 		EffectiveProp = SetProperty->ElementProp;
 	}
-	else if (ContainerType == EMDMetaDataPropertyContainerType::Map)
+	else if (ContainerType == EMDMetaDataPropertyContainerType::Map || Property->IsA<FMapProperty>())
 	{
 		const FMapProperty* MapProperty = CastField<FMapProperty>(Property);
 		if (MapProperty == nullptr)
@@ -131,10 +131,14 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 			return false;
 		}
 
-		const FMDMetaDataEditorPropertyType* ValueTypePtr = ValueType.GetPtr<FMDMetaDataEditorPropertyType>();
-		if (ValueTypePtr == nullptr || !ValueTypePtr->DoesMatchProperty(MapProperty->ValueProp))
+		// Only validate ValueType if we're explicitly checking for a map
+		if (ContainerType == EMDMetaDataPropertyContainerType::Map)
 		{
-			return false;
+			const FMDMetaDataEditorPropertyType* ValueTypePtr = ValueType.GetPtr<FMDMetaDataEditorPropertyType>();
+			if (ValueTypePtr == nullptr || !ValueTypePtr->DoesMatchProperty(MapProperty->ValueProp))
+			{
+				return false;
+			}
 		}
 
 		EffectiveProp = MapProperty->KeyProp;
@@ -147,7 +151,7 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 
 	if (PropertyType == UEdGraphSchema_K2::PC_Struct)
 	{
-		const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
+		const FStructProperty* StructProperty = CastField<FStructProperty>(EffectiveProp);
 		if (StructProperty == nullptr || StructProperty->Struct == nullptr)
 		{
 			return false;
@@ -162,8 +166,8 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 	if (PropertyType == UEdGraphSchema_K2::PC_Object || PropertyType == UEdGraphSchema_K2::PC_SoftObject)
 	{
 		const FObjectPropertyBase* ObjectProperty = (PropertyType == UEdGraphSchema_K2::PC_Object)
-			? CastField<FObjectPropertyBase>(Property)
-			: CastField<FSoftObjectProperty>(Property);
+			? CastField<FObjectPropertyBase>(EffectiveProp)
+			: CastField<FSoftObjectProperty>(EffectiveProp);
 
 		if (ObjectProperty == nullptr || ObjectProperty->PropertyClass == nullptr)
 		{
@@ -178,14 +182,14 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 
 	if (PropertyType == UEdGraphSchema_K2::PC_Class || PropertyType == UEdGraphSchema_K2::PC_SoftClass)
 	{
-		if (!Property->IsA<FClassProperty>() && !Property->IsA<FSoftClassProperty>())
+		if (!EffectiveProp->IsA<FClassProperty>() && !EffectiveProp->IsA<FSoftClassProperty>())
 		{
 			return false;
 		}
 
 		const UClass* MetaClass = (PropertyType == UEdGraphSchema_K2::PC_Class)
-			? CastField<FClassProperty>(Property)->MetaClass
-			: CastField<FSoftClassProperty>(Property)->MetaClass;
+			? CastField<FClassProperty>(EffectiveProp)->MetaClass
+			: CastField<FSoftClassProperty>(EffectiveProp)->MetaClass;
 		if (MetaClass == nullptr)
 		{
 			return false;

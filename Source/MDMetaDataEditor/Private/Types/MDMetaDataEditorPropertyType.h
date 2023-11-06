@@ -1,6 +1,7 @@
 // Copyright Dylan Dumesnil. All Rights Reserved.
 
 #pragma once
+
 #include "EdGraph/EdGraphPin.h"
 #include "InstancedStruct.h"
 
