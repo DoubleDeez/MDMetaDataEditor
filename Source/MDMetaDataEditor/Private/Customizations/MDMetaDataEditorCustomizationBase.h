@@ -45,6 +45,11 @@ private:
 	TOptional<FString> GetMetaDataValue(FName Key) const;
 	void RemoveMetaDataKey(const FName& Key);
 
+	void CopyMetaData(FName Key) const;
+	bool CanCopyMetaData(FName Key) const;
+	void PasteMetaData(FName Key);
+	bool CanPasteMetaData(FName Key) const;
+
 	template<bool bIsBoolean>
 	ECheckBoxState IsChecked(FName Key) const;
 	template<bool bIsBoolean>

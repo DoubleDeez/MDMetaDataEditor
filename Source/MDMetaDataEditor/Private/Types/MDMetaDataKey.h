@@ -46,8 +46,24 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	EMDMetaDataEditorKeyType KeyType = EMDMetaDataEditorKeyType::Flag;
 
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (MultiLine))
 	FString Description;
+
+	// Group meta data in sub-categories by setting this value, nested categories delineated with pipe characters `|`
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	FString Category;
+
+	// This metadata value will be hidden unless the property/function also has the specified `RequiredMetaData`
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (GetOptions = "GetMetaDataKeyNames"))
+	FName RequiredMetaData = NAME_None;
+	FMDMetaDataKey& SetRequiredMetaData(const FName& InRequiredMetaData) { RequiredMetaData = InRequiredMetaData; return *this; }
+
+	// This metadata value will be hidden if the property/function also has any of the specified `IncompatibleMetaData`
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (GetOptions = "GetMetaDataKeyNames"))
+	TSet<FName> IncompatibleMetaData;
+	FMDMetaDataKey& AddIncompatibleMetaData(const FName& InIncompatibleMetaData) { IncompatibleMetaData.Add(InIncompatibleMetaData); return *this; }
+	FMDMetaDataKey& SetIncompatibleMetaData(const FName& InIncompatibleMetaData) { IncompatibleMetaData = { InIncompatibleMetaData}; return *this; }
+	FMDMetaDataKey& SetIncompatibleMetaData(TSet<FName>&& InIncompatibleMetaData) { IncompatibleMetaData = MoveTemp(InIncompatibleMetaData); return *this; }
 
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	TSet<TSoftClassPtr<UBlueprint>> SupportedBlueprints = { UBlueprint::StaticClass() };
@@ -62,6 +78,28 @@ public:
 	FMDMetaDataKey& AddSupportedProperty(FMDMetaDataEditorPropertyType&& InSupportedProperty) { SupportedPropertyTypes.Emplace(MoveTemp(InSupportedProperty)); return *this; }
 	FMDMetaDataKey& SetSupportedProperty(FMDMetaDataEditorPropertyType&& InSupportedProperty) { ClearSupportedProperties().AddSupportedProperty(MoveTemp(InSupportedProperty)); return *this; }
 	FMDMetaDataKey& SetSupportedProperties(const TSet<FMDMetaDataEditorPropertyType>& InSupportedProperties) { SupportedPropertyTypes = InSupportedProperties; return *this; }
+	FMDMetaDataKey& AddSupportedObjectProperty(UClass* ObjectClass, bool bIncludeSoft = false)
+	{
+		check(ObjectClass);
+		AddSupportedProperty({ UEdGraphSchema_K2::PC_Object, NAME_None, ObjectClass });
+		if (bIncludeSoft)
+		{
+			AddSupportedProperty({ UEdGraphSchema_K2::PC_SoftObject, NAME_None, ObjectClass });
+		}
+		return *this;
+	}
+	FMDMetaDataKey& SetSupportedObjectProperty(UClass* ObjectClass, bool bIncludeSoft = false) { return ClearSupportedProperties().AddSupportedObjectProperty(ObjectClass, bIncludeSoft); }
+	FMDMetaDataKey& AddSupportedClassProperty(UClass* ObjectClass, bool bIncludeSoft = false)
+	{
+		check(ObjectClass);
+		AddSupportedProperty({ UEdGraphSchema_K2::PC_Class, NAME_None, ObjectClass });
+		if (bIncludeSoft)
+		{
+			AddSupportedProperty({ UEdGraphSchema_K2::PC_Class, NAME_None, ObjectClass });
+		}
+		return *this;
+	}
+	FMDMetaDataKey& SetSupportedClassProperty(UClass* ObjectClass, bool bIncludeSoft = false) { return ClearSupportedProperties().AddSupportedClassProperty(ObjectClass, bIncludeSoft); }
 
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	bool bCanBeUsedByFunctions = false;

@@ -11,6 +11,7 @@ public class MDMetaDataEditor : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"ApplicationCore",
 				"BlueprintGraph",
 				"Core",
 				"CoreUObject",
@@ -24,6 +25,7 @@ public class MDMetaDataEditor : ModuleRules
 				"Slate",
 				"SlateCore",
 				"StructUtils",
+				"UMG",
 				"UMGEditor",
 				"UnrealEd"
 			}

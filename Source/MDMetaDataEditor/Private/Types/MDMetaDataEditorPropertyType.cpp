@@ -201,6 +201,30 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 		}
 	}
 
+	if (PropertyType == UEdGraphSchema_K2::PC_Enum || (PropertyType == UEdGraphSchema_K2::PC_Byte && PropertySubTypeObject.IsValid()))
+	{
+		const UEnum* PropertyEnum = [Property]() -> const UEnum*
+		{
+			if (const FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property))
+			{
+				return EnumProperty->GetEnum();
+			}
+			else if (const FByteProperty* ByteProperty = CastField<FByteProperty>(Property))
+			{
+				return ByteProperty->Enum;
+			}
+
+			return nullptr;
+		}();
+
+		if (!IsValid(PropertyEnum))
+		{
+			return false;
+		}
+
+		return PropertySubTypeObject == UEnum::StaticClass() || PropertySubTypeObject == PropertyEnum;
+	}
+
 	const UEdGraphSchema_K2* K2Schema = GetDefault<UEdGraphSchema_K2>();
 	FEdGraphPinType PinType;
 	if (!K2Schema->ConvertPropertyToPinType(EffectiveProp, PinType))

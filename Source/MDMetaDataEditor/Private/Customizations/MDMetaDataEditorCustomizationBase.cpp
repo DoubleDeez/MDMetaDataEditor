@@ -6,11 +6,13 @@
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "GameplayTagContainer.h"
+#include "HAL/PlatformApplicationMisc.h"
+#include "IDetailGroup.h"
 #include "K2Node_CustomEvent.h"
 #include "K2Node_FunctionEntry.h"
 #include "K2Node_Tunnel.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "ScopedTransaction.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SEditableTextBox.h"
@@ -118,10 +120,72 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 	DetailLayout.EditCategory("MetaData").SetSortOrder(MetaDataSortOrder);
 	DetailLayout.EditCategory("DefaultValue").SetSortOrder(MetaDataSortOrder + 1);
 
-	auto AddMetaDataKey = [this, &DetailLayout, bIsReadOnly](const FMDMetaDataKey& Key)
+	TMap<FName, IDetailGroup*> GroupMap;
+
+	auto AddMetaDataKey = [this, &DetailLayout, &GroupMap, bIsReadOnly](const FMDMetaDataKey& Key)
 	{
-		DetailLayout.EditCategory("MetaData")
-			.AddCustomRow(FText::FromName(Key.Key))
+		if (Key.RequiredMetaData != Key.Key && !Key.RequiredMetaData.IsNone() && !HasMetaDataValue(Key.RequiredMetaData))
+		{
+			return;
+		}
+
+		for (const FName& IncompatibleKey : Key.IncompatibleMetaData)
+		{
+			if (IncompatibleKey != Key.Key && !IncompatibleKey.IsNone() && HasMetaDataValue(IncompatibleKey))
+			{
+				return;
+			}
+		}
+
+		IDetailCategoryBuilder& Category = DetailLayout.EditCategory("MetaData");
+		IDetailGroup* Group = nullptr;
+
+		FName GroupName = NAME_None;
+		TArray<FString> Subgroups;
+		Key.Category.ParseIntoArray(Subgroups, TEXT("|"));
+		for (const FString& Subgroup : Subgroups)
+		{
+			const FText DisplayName = FText::FromString(Subgroup);
+			if (DisplayName.IsEmptyOrWhitespace())
+			{
+				continue;
+			}
+
+			GroupName = (GroupName.IsNone()) ? *Subgroup : *FString::Printf(TEXT("%s|%s"), *GroupName.ToString(), *Subgroup);
+
+			if (GroupMap.Contains(GroupName))
+			{
+				Group = GroupMap.FindRef(GroupName);
+			}
+			else if (Group != nullptr)
+			{
+				Group = &Group->AddGroup(GroupName, DisplayName, true);
+				GroupMap.Add(GroupName, Group);
+			}
+			else
+			{
+				Group = &Category.AddGroup(GroupName, DisplayName, false, true);
+				GroupMap.Add(GroupName, Group);
+			}
+		}
+
+		FDetailWidgetRow& MetaDataRow = (Group != nullptr)
+			? Group->AddWidgetRow().FilterString(FText::FromName(Key.Key))
+			: Category.AddCustomRow(FText::FromName(Key.Key));
+
+		const FUIAction CopyAction = {
+			FExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CopyMetaData, Key.Key),
+			FCanExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CanCopyMetaData, Key.Key)
+		};
+
+		const FUIAction PasteAction = {
+			FExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::PasteMetaData, Key.Key),
+			FCanExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CanPasteMetaData, Key.Key)
+		};
+
+		MetaDataRow
+			.CopyAction(CopyAction)
+			.PasteAction(PasteAction)
 			.IsValueEnabled(!bIsReadOnly)
 			.NameContent()
 			[
@@ -291,10 +355,19 @@ void FMDMetaDataEditorCustomizationBase::AddMetaDataKey(const FName& Key)
 
 void FMDMetaDataEditorCustomizationBase::SetMetaDataValue(const FName& Key, const FString& Value)
 {
+	TOptional<FString> CurrentValue = GetMetaDataValue(Key);
+	if (CurrentValue.IsSet() && CurrentValue->Equals(Value))
+	{
+		return;
+	}
+
+	FScopedTransaction Transaction(FText::Format(INVTEXT("Set Meta Data [{0}={1}]"), FText::FromName(Key), FText::FromString(Value)));
+
 	if (UBlueprint* Blueprint = BlueprintPtr.Get())
 	{
 		if (FProperty* Property = PropertyBeingCustomized.Get())
 		{
+			Blueprint->Modify();
 			for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
 			{
 				if (VariableDescription.VarName == Property->GetFName())
@@ -310,14 +383,17 @@ void FMDMetaDataEditorCustomizationBase::SetMetaDataValue(const FName& Key, cons
 
 	if (UK2Node_FunctionEntry* TypedEntryNode = FunctionBeingCustomized.Get())
 	{
+		TypedEntryNode->Modify();
 		MetaData = &(TypedEntryNode->MetaData);
 	}
 	else if (UK2Node_Tunnel* TunnelNode = TunnelBeingCustomized.Get())
 	{
+		TunnelNode->Modify();
 		MetaData = &(TunnelNode->MetaData);
 	}
 	else if (UK2Node_CustomEvent* EventNode = EventBeingCustomized.Get())
 	{
+		EventNode->Modify();
 		MetaData = &(EventNode->GetUserDefinedMetaData());
 	}
 
@@ -385,6 +461,12 @@ TOptional<FString> FMDMetaDataEditorCustomizationBase::GetMetaDataValue(FName Ke
 
 void FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey(const FName& Key)
 {
+	if (!HasMetaDataValue(Key))
+	{
+		return;
+	}
+
+	FScopedTransaction Transaction(FText::Format(INVTEXT("Removed Meta Data [{0}]"), FText::FromName(Key)));
 	if (UBlueprint* Blueprint = BlueprintPtr.Get())
 	{
 		if (FProperty* Property = PropertyBeingCustomized.Get())
@@ -421,6 +503,76 @@ void FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey(const FName& Key)
 	}
 
 	FBlueprintEditorUtils::MarkBlueprintAsModified(BlueprintPtr.Get());
+}
+
+void FMDMetaDataEditorCustomizationBase::CopyMetaData(FName Key) const
+{
+	const TOptional<FString> Value = GetMetaDataValue(Key);
+
+	// Copy in Key=Value format
+	FPlatformApplicationMisc::ClipboardCopy(*FString::Printf(TEXT("%s=\"%s\""), *Key.ToString(), *Value.Get(TEXT("")).ReplaceCharWithEscapedChar()));
+}
+
+bool FMDMetaDataEditorCustomizationBase::CanCopyMetaData(FName Key) const
+{
+	return HasMetaDataValue(Key);
+}
+
+void FMDMetaDataEditorCustomizationBase::PasteMetaData(FName Key)
+{
+	FString Clipboard;
+	FPlatformApplicationMisc::ClipboardPaste(Clipboard);
+	Clipboard.TrimStartAndEndInline();
+
+	// Handle pasting the same metadata format used in C++
+	int32 EqualIndex = INDEX_NONE;
+	if (Clipboard.FindChar(TEXT('='), EqualIndex) && EqualIndex > 0)
+	{
+		// Skip if the clipboard has != or == without starting with "Key=" (like a raw edit condition) but ending with = means a blank value
+		if (Clipboard[EqualIndex - 1] != TEXT('!') && (EqualIndex == (Clipboard.Len() - 1) || Clipboard[EqualIndex + 1] != TEXT('=')))
+		{
+			// Allow paste if the key matches
+			const FString ClipKey = Clipboard.Left(EqualIndex).TrimStartAndEnd();
+			if (*ClipKey != Key)
+			{
+				return;
+			}
+
+			const FString ClipValue = Clipboard.Mid(EqualIndex + 1).TrimStartAndEnd().TrimQuotes();
+			SetMetaDataValue(Key, Clipboard.ReplaceEscapedCharWithChar());
+		}
+	}
+
+	// Clipboard is just the value
+	if (!Clipboard.IsEmpty())
+	{
+		Clipboard.TrimQuotesInline();
+		SetMetaDataValue(Key, Clipboard.ReplaceEscapedCharWithChar());
+	}
+}
+
+bool FMDMetaDataEditorCustomizationBase::CanPasteMetaData(FName Key) const
+{
+	FString Clipboard;
+	FPlatformApplicationMisc::ClipboardPaste(Clipboard);
+	Clipboard.TrimStartAndEndInline();
+
+	// Handle pasting the same metadata format used in C++
+	int32 EqualIndex = INDEX_NONE;
+	if (Clipboard.FindChar(TEXT('='), EqualIndex) && EqualIndex > 0)
+	{
+		// Skip if the clipboard has != or == without starting with "Key=" (like a raw edit condition) but ending with = means a blank value
+		if (Clipboard[EqualIndex - 1] != TEXT('!') && (EqualIndex == (Clipboard.Len() - 1) || Clipboard[EqualIndex + 1] != TEXT('=')))
+		{
+			// Allow paste if the key matches
+			Clipboard.LeftInline(EqualIndex);
+			Clipboard.TrimStartAndEndInline();
+			return *Clipboard == Key;
+		}
+	}
+
+	// Clipboard is just the value
+	return !Clipboard.IsEmpty();
 }
 
 FText FMDMetaDataEditorCustomizationBase::GetMetaDataValueText(FName Key) const

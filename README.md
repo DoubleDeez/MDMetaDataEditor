@@ -24,6 +24,12 @@ The **Key Type** should match the expected type of the meta data key, that will 
 
 For Meta Data Keys meant only for functions, the **Supported Property Types** list should be empty and have **Can be Used by Functions** checked.
 
+See these pages for documentation on various meta data options:
+- [benui's all UPROPERTY specifiers](https://benui.ca/unreal/uproperty/)
+- [benui's all UFUNCTION specifiers](https://benui.ca/unreal/ufunction/)
+- [Unreal Engine 5.2 UProperty specifiers](https://docs.unrealengine.com/5.2/en-US/unreal-engine-uproperty-specifiers/#metadataspecifiers)
+- [Unreal Engine 5.3 Function specifiers](https://docs.unrealengine.com/5.3/en-US/ufunctions-in-unreal-engine/#metadataspecifiers)
+
 ![](./Resources/readme_MetaDataKeys.png)
 
 ![](./Resources/readme_CustomMetaData.png)
