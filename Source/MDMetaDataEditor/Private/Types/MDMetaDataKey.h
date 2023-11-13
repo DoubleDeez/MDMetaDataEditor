@@ -31,7 +31,13 @@ enum class EMDMetaDataEditorKeyType : uint8
 	// TODO - The meta data value is a UStruct path
 	// Struct,
 	// TODO - The meta data value is a UClass path
-	// Class
+	// Class,
+	// TODO - The meta data value is a UInterface path
+	// Interface,
+	// TODO - The meta data value is the name of a param on this function
+	// Param,
+	// TODO - Provide a custom Struct that creates the editor widget and sets the value of the meta data
+	// Custom,
 };
 
 USTRUCT()

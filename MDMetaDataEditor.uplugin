@@ -18,6 +18,11 @@
 			"Name": "MDMetaDataEditor",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"
+		},
+		{
+			"Name": "MDMetaDataEditorGraph",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "PostEngineInit"
 		}
 	],
 	"Plugins": [

@@ -54,6 +54,25 @@ namespace MDMDECB_Private
 		}
 		return nullptr;
 	}
+
+	UK2Node_FunctionEntry* FindFunctionNode(const UBlueprint* Blueprint, const UFunction* Function)
+	{
+		if (!IsValid(Blueprint) || !IsValid(Function))
+		{
+			return nullptr;
+		}
+
+		for (UEdGraph* Graph : Blueprint->FunctionGraphs)
+		{
+			UK2Node_FunctionEntry* FunctionEntry = FindNode<UK2Node_FunctionEntry, false>(Graph);
+			if (IsValid(FunctionEntry) && FFunctionFromNodeHelper::FunctionFromNode(FunctionEntry) == Function)
+			{
+				return FunctionEntry;
+			}
+		}
+
+		return nullptr;
+	}
 }
 
 FMDMetaDataEditorCustomizationBase::FMDMetaDataEditorCustomizationBase(const TWeakPtr<IBlueprintEditor>& BlueprintEditor, TWeakObjectPtr<UBlueprint>&& BlueprintPtr)
@@ -363,17 +382,37 @@ void FMDMetaDataEditorCustomizationBase::SetMetaDataValue(const FName& Key, cons
 
 	FScopedTransaction Transaction(FText::Format(INVTEXT("Set Meta Data [{0}={1}]"), FText::FromName(Key), FText::FromString(Value)));
 
-	if (UBlueprint* Blueprint = BlueprintPtr.Get())
+	if (FProperty* Property = PropertyBeingCustomized.Get())
 	{
-		if (FProperty* Property = PropertyBeingCustomized.Get())
+		if (UBlueprint* Blueprint = BlueprintPtr.Get())
 		{
-			Blueprint->Modify();
+			bool bDidFindMetaData = false;
+
 			for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
 			{
 				if (VariableDescription.VarName == Property->GetFName())
 				{
+					Blueprint->Modify();
 					Property->SetMetaData(Key, FString(Value));
 					VariableDescription.SetMetaData(Key, Value);
+					bDidFindMetaData = true;
+				}
+			}
+
+			if (!bDidFindMetaData)
+			{
+				// Is it a local variable?
+				if (UK2Node_FunctionEntry* FuncNode = MDMDECB_Private::FindFunctionNode(Blueprint, Cast<UFunction>(Property->GetOwnerUObject())))
+				{
+					for (FBPVariableDescription& VariableDescription : FuncNode->LocalVariables)
+					{
+						if (VariableDescription.VarName == Property->GetFName())
+						{
+							FuncNode->Modify();
+							Property->SetMetaData(Key, FString(Value));
+							VariableDescription.SetMetaData(Key, Value);
+						}
+					}
 				}
 			}
 		}
@@ -381,10 +420,10 @@ void FMDMetaDataEditorCustomizationBase::SetMetaDataValue(const FName& Key, cons
 
 	FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
 
-	if (UK2Node_FunctionEntry* TypedEntryNode = FunctionBeingCustomized.Get())
+	if (UK2Node_FunctionEntry* FuncNode = FunctionBeingCustomized.Get())
 	{
-		TypedEntryNode->Modify();
-		MetaData = &(TypedEntryNode->MetaData);
+		FuncNode->Modify();
+		MetaData = &(FuncNode->MetaData);
 	}
 	else if (UK2Node_Tunnel* TunnelNode = TunnelBeingCustomized.Get())
 	{
@@ -431,9 +470,9 @@ TOptional<FString> FMDMetaDataEditorCustomizationBase::GetMetaDataValue(FName Ke
 
 	const FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
 
-	if (const UK2Node_FunctionEntry* TypedEntryNode = Cast<UK2Node_FunctionEntry>(FunctionBeingCustomized.Get()))
+	if (const UK2Node_FunctionEntry* FuncNode = Cast<UK2Node_FunctionEntry>(FunctionBeingCustomized.Get()))
 	{
-		MetaData = &(TypedEntryNode->MetaData);
+		MetaData = &(FuncNode->MetaData);
 	}
 	else if (const UK2Node_Tunnel* TunnelNode = Cast<UK2Node_Tunnel>(TunnelBeingCustomized.Get()))
 	{
@@ -467,16 +506,37 @@ void FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey(const FName& Key)
 	}
 
 	FScopedTransaction Transaction(FText::Format(INVTEXT("Removed Meta Data [{0}]"), FText::FromName(Key)));
-	if (UBlueprint* Blueprint = BlueprintPtr.Get())
+	if (FProperty* Property = PropertyBeingCustomized.Get())
 	{
-		if (FProperty* Property = PropertyBeingCustomized.Get())
+		if (UBlueprint* Blueprint = BlueprintPtr.Get())
 		{
+			bool bDidFindMetaData = false;
+
 			for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
 			{
 				if (VariableDescription.VarName == Property->GetFName())
 				{
+					Blueprint->Modify();
 					Property->RemoveMetaData(Key);
 					VariableDescription.RemoveMetaData(Key);
+					bDidFindMetaData = false;
+				}
+			}
+
+			if (!bDidFindMetaData)
+			{
+				// Is it a local variable?
+				if (UK2Node_FunctionEntry* FuncNode = MDMDECB_Private::FindFunctionNode(Blueprint, Cast<UFunction>(Property->GetOwnerUObject())))
+				{
+					for (FBPVariableDescription& VariableDescription : FuncNode->LocalVariables)
+					{
+						if (VariableDescription.VarName == Property->GetFName())
+						{
+							FuncNode->Modify();
+							Property->RemoveMetaData(Key);
+							VariableDescription.RemoveMetaData(Key);
+						}
+					}
 				}
 			}
 		}
@@ -484,9 +544,9 @@ void FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey(const FName& Key)
 
 	FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
 
-	if (UK2Node_FunctionEntry* TypedEntryNode = Cast<UK2Node_FunctionEntry>(FunctionBeingCustomized.Get()))
+	if (UK2Node_FunctionEntry* FuncNode = Cast<UK2Node_FunctionEntry>(FunctionBeingCustomized.Get()))
 	{
-		MetaData = &(TypedEntryNode->MetaData);
+		MetaData = &(FuncNode->MetaData);
 	}
 	else if (UK2Node_Tunnel* TunnelNode = Cast<UK2Node_Tunnel>(TunnelBeingCustomized.Get()))
 	{
