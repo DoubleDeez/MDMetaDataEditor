@@ -64,4 +64,10 @@ void FMDMetaDataEditorModule::ShutdownModule()
 	}
 }
 
+void FMDMetaDataEditorModule::RestartModule()
+{
+	ShutdownModule();
+	StartupModule();
+}
+
 IMPLEMENT_MODULE(FMDMetaDataEditorModule, MDMetaDataEditor)

@@ -9,6 +9,8 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	void RestartModule();
+
 private:
 	FDelegateHandle VariableCustomizationHandle;
 	FDelegateHandle LocalVariableCustomizationHandle;

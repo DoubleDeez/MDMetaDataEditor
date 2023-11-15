@@ -28,23 +28,27 @@ public:
 	void ForEachFunctionMetaDataKey(const UBlueprint* Blueprint, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
 
 	// If true, the meta data keys will automatically be sorted alphabetically
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", meta = (ConfigRestartRequired = "true"))
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
 	bool bSortMetaDataAlphabetically = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", meta = (ConfigRestartRequired = "true"))
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
 	bool bEnableMetaDataEditorForVariables = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", meta = (ConfigRestartRequired = "true"))
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
 	bool bEnableMetaDataEditorForLocalVariables = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", meta = (ConfigRestartRequired = "true"))
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
 	bool bEnableMetaDataEditorForFunctions = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", meta = (ConfigRestartRequired = "true"))
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
 	bool bEnableMetaDataEditorForCustomEvents = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", DisplayName = "Enable Meta Data Editor for Collapsed Graphs", meta = (ConfigRestartRequired = "true"))
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", DisplayName = "Enable Meta Data Editor for Collapsed Graphs")
 	bool bEnableMetaDataEditorForTunnels = false;
+
+#if WITH_EDITOR
+	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif //WITH_EDITOR
 
 private:
 	UFUNCTION()
