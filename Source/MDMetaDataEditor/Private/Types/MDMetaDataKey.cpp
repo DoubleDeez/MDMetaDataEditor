@@ -38,6 +38,11 @@ bool FMDMetaDataKey::DoesSupportProperty(const FProperty* Property) const
 	return false;
 }
 
+FText FMDMetaDataKey::GetKeyDisplayText() const
+{
+	return FText::FromString(FName::NameToDisplayString(Key.ToString(), false));
+}
+
 bool FMDMetaDataKey::operator==(const FMDMetaDataKey& Other) const
 {
 	return Key == Other.Key && KeyType == Other.KeyType;

@@ -210,7 +210,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			[
 				SNew(STextBlock)
 				.Font(DetailLayout.GetDetailFont())
-				.Text(FText::FromName(Key.Key))
+				.Text(Key.GetKeyDisplayText())
 				.ToolTipText(FText::FromString(Key.Description))
 			]
 			.ValueContent()

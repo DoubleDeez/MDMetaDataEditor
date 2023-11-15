@@ -155,6 +155,8 @@ public:
 	bool DoesSupportBlueprint(const UBlueprint* Blueprint) const;
 	bool DoesSupportProperty(const FProperty* Property) const;
 
+	FText GetKeyDisplayText() const;
+
 	bool operator==(const FMDMetaDataKey& Other) const;
 	bool operator!=(const FMDMetaDataKey& Other) const
 	{
