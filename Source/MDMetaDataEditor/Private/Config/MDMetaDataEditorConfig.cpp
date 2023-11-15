@@ -8,6 +8,7 @@
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
 #include "WidgetBlueprint.h"
+#include "MDMetaDataEditorModule.h"
 
 UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 {
@@ -256,6 +257,16 @@ void UMDMetaDataEditorConfig::ForEachFunctionMetaDataKey(const UBlueprint* Bluep
 		Func(Key);
 	}
 }
+
+#if WITH_EDITOR
+void UMDMetaDataEditorConfig::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (FMDMetaDataEditorModule* Module = FModuleManager::GetModulePtr<FMDMetaDataEditorModule>(TEXT("MDMetaDataEditor")))
+	{
+		Module->RestartModule();
+	}
+}
+#endif //WITH_EDITOR
 
 TArray<FName> UMDMetaDataEditorConfig::GetMetaDataKeyNames() const
 {
