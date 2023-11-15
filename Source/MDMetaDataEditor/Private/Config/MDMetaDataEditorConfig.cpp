@@ -258,6 +258,7 @@ void UMDMetaDataEditorConfig::ForEachFunctionMetaDataKey(const UBlueprint* Bluep
 	}
 }
 
+#if WITH_EDITOR
 void UMDMetaDataEditorConfig::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (FMDMetaDataEditorModule* Module = FModuleManager::GetModulePtr<FMDMetaDataEditorModule>(TEXT("MDMetaDataEditor")))
@@ -265,6 +266,7 @@ void UMDMetaDataEditorConfig::PostEditChangeProperty(FPropertyChangedEvent& Prop
 		Module->RestartModule();
 	}
 }
+#endif //WITH_EDITOR
 
 TArray<FName> UMDMetaDataEditorConfig::GetMetaDataKeyNames() const
 {
