@@ -189,8 +189,8 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 		}
 
 		FDetailWidgetRow& MetaDataRow = (Group != nullptr)
-			? Group->AddWidgetRow().FilterString(FText::FromName(Key.Key))
-			: Category.AddCustomRow(FText::FromName(Key.Key));
+			? Group->AddWidgetRow().FilterString(Key.GetFilterText())
+			: Category.AddCustomRow(Key.GetFilterText());
 
 		const FUIAction CopyAction = {
 			FExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CopyMetaData, Key.Key),
@@ -211,7 +211,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 				SNew(STextBlock)
 				.Font(DetailLayout.GetDetailFont())
 				.Text(Key.GetKeyDisplayText())
-				.ToolTipText(FText::FromString(Key.Description))
+				.ToolTipText(Key.GetToolTipText())
 			]
 			.ValueContent()
 			[

@@ -155,7 +155,18 @@ public:
 	bool DoesSupportBlueprint(const UBlueprint* Blueprint) const;
 	bool DoesSupportProperty(const FProperty* Property) const;
 
+	// Overrides the User friendly name to show for this key if not empty.
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (ToggleInlineEditCondition))
+	bool bUseDisplayNameOverride = false;
+
+	// Overrides the User friendly name to show for this key if not empty.
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (DisplayAfter = "KeyType", EditCondition = "bUseDisplayNameOverride"))
+	FText DisplayNameOverride;
+	FMDMetaDataKey& SetDisplayNameOverride(FText InDisplayNameOverride) { bUseDisplayNameOverride = true; DisplayNameOverride = InDisplayNameOverride; return *this; }
+
 	FText GetKeyDisplayText() const;
+	FText GetToolTipText() const;
+	FText GetFilterText() const;
 
 	bool operator==(const FMDMetaDataKey& Other) const;
 	bool operator!=(const FMDMetaDataKey& Other) const
