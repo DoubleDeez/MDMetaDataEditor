@@ -156,7 +156,7 @@ public:
 	bool DoesSupportProperty(const FProperty* Property) const;
 
 	// Overrides the User friendly name to show for this key if not empty.
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (ToggleInlineEditCondition))
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (InlineEditConditionToggle))
 	bool bUseDisplayNameOverride = false;
 
 	// Overrides the User friendly name to show for this key if not empty.
