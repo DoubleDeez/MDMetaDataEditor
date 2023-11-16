@@ -161,8 +161,8 @@ public:
 		return !(*this == Other);
 	}
 
-	friend uint32 GetTypeHash(const FMDMetaDataKey& Key)
+	friend uint32 GetTypeHash(const FMDMetaDataKey& MetaDataKey)
 	{
-		return HashCombine(GetTypeHash(Key.Key), GetTypeHash(Key.KeyType));
+		return HashCombine(GetTypeHash(MetaDataKey.Key), GetTypeHash(MetaDataKey.KeyType));
 	}
 };
