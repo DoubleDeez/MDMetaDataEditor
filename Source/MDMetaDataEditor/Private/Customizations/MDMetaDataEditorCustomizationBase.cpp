@@ -134,10 +134,20 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 		bIsFunction = true;
 	}
 
-	// Put Meta Data above Default Value for Variables
-	const int32 MetaDataSortOrder = DetailLayout.EditCategory("Variable").GetSortOrder() + 1;
-	DetailLayout.EditCategory("MetaData").SetSortOrder(MetaDataSortOrder);
-	DetailLayout.EditCategory("DefaultValue").SetSortOrder(MetaDataSortOrder + 1);
+	if (bIsProperty)
+	{
+		// Put Meta Data above Default Value for Variables
+		const int32 MetaDataSortOrder = DetailLayout.EditCategory("Variable").GetSortOrder() + 1;
+		DetailLayout.EditCategory("MetaData").SetSortOrder(MetaDataSortOrder);
+		DetailLayout.EditCategory("DefaultValue").SetSortOrder(MetaDataSortOrder + 1);
+	}
+	else if (bIsFunction)
+	{
+		// Put Meta Data above Inputs for Functions
+		const int32 MetaDataSortOrder = DetailLayout.EditCategory("Graph").GetSortOrder() + 1;
+		DetailLayout.EditCategory("MetaData").SetSortOrder(MetaDataSortOrder);
+		DetailLayout.EditCategory("Inputs").SetSortOrder(MetaDataSortOrder + 1);
+	}
 
 	TMap<FName, IDetailGroup*> GroupMap;
 
