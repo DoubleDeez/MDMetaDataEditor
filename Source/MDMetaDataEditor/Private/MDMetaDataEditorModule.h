@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "Delegates/IDelegateInstance.h"
+#include "Modules/ModuleInterface.h"
+
 class FMDMetaDataEditorModule : public IModuleInterface
 {
 public:
