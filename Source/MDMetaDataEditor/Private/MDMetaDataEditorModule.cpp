@@ -10,6 +10,7 @@
 #include "K2Node_CustomEvent.h"
 #include "K2Node_FunctionEntry.h"
 #include "K2Node_Tunnel.h"
+#include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
 
 void FMDMetaDataEditorModule::StartupModule()
