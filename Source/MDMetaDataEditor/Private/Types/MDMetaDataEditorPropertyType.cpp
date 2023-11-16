@@ -182,7 +182,12 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 
 	if (PropertyType == UEdGraphSchema_K2::PC_Class || PropertyType == UEdGraphSchema_K2::PC_SoftClass)
 	{
-		if (!EffectiveProp->IsA<FClassProperty>() && !EffectiveProp->IsA<FSoftClassProperty>())
+		if (PropertyType == UEdGraphSchema_K2::PC_Class && !EffectiveProp->IsA<FClassProperty>())
+		{
+			return false;
+		}
+
+		if (PropertyType == UEdGraphSchema_K2::PC_SoftClass && !EffectiveProp->IsA<FSoftClassProperty>())
 		{
 			return false;
 		}
