@@ -34,6 +34,10 @@ enum class EMDMetaDataEditorKeyType : uint8
 	// Class,
 	// TODO - The meta data value is a UInterface path
 	// Interface,
+	// TODO - The meta data value is a UEnum path
+	// Enum,
+	// TODO - The meta data value is a value of a specific enum (maybe always of the property? Let user select UEnum if property isn't an enum?)
+	// EnumValue,
 	// TODO - The meta data value is the name of a param on this function
 	// Param,
 	// TODO - Provide a custom Struct that creates the editor widget and sets the value of the meta data
@@ -110,7 +114,22 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	bool bCanBeUsedByFunctions = false;
 	FMDMetaDataKey& CanBeUsedByFunctions(bool InCanBeUsedByFunctions) { bCanBeUsedByFunctions = InCanBeUsedByFunctions; return *this; }
-	FMDMetaDataKey& SetFunctionsOnly() { bCanBeUsedByFunctions = true; ClearSupportedProperties(); return *this; }
+	FMDMetaDataKey& SetFunctionsOnly() { bCanBeUsedByFunctions = true; bCanBeUsedOnFunctionParameters = false; bCanBeUsedOnVariables = false; bCanBeUsedOnLocalVariables = false; ClearSupportedProperties(); return *this; }
+
+	// Whether or not this meta data can be used on Blueprint Variables
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	bool bCanBeUsedOnVariables = true;
+	FMDMetaDataKey& CanBeUsedOnVariables(bool InCanBeUsedOnVariables) { bCanBeUsedOnVariables = InCanBeUsedOnVariables; return *this; }
+
+	// Whether or not this meta data can be used on Blueprint Function's Local Variables
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	bool bCanBeUsedOnLocalVariables = true;
+	FMDMetaDataKey& CanBeUsedOnLocalVariables(bool InCanBeUsedOnLocalVariables) { bCanBeUsedOnLocalVariables = InCanBeUsedOnLocalVariables; return *this; }
+
+	// Whether or not this meta data can be used on Blueprint Function Parameters
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	bool bCanBeUsedOnFunctionParameters = true;
+	FMDMetaDataKey& CanBeUsedOnFunctionParameters(bool InCanBeUsedOnFunctionParameters) { bCanBeUsedOnFunctionParameters = InCanBeUsedOnFunctionParameters; return *this; }
 
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (EditConditionHides, EditCondition = "KeyType == EMDMetaDataEditorKeyType::Integer || KeyType == EMDMetaDataEditorKeyType::Float"))
 	bool bAllowSlider = true;
@@ -162,7 +181,7 @@ public:
 	// Overrides the User friendly name to show for this key if not empty.
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (DisplayAfter = "KeyType", EditCondition = "bUseDisplayNameOverride"))
 	FText DisplayNameOverride;
-	FMDMetaDataKey& SetDisplayNameOverride(FText InDisplayNameOverride) { bUseDisplayNameOverride = true; DisplayNameOverride = InDisplayNameOverride; return *this; }
+	FMDMetaDataKey& SetDisplayNameOverride(FText&& InDisplayNameOverride) { bUseDisplayNameOverride = true; DisplayNameOverride = MoveTemp(InDisplayNameOverride); return *this; }
 
 	FText GetKeyDisplayText() const;
 	FText GetToolTipText() const;

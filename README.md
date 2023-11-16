@@ -1,6 +1,6 @@
 # MDMetaDataEditor
 
-MDMetaDataEditor enables editing the meta data of Blueprint-created variables, functions, events, and collapsed graphs.
+MDMetaDataEditor enables editing the meta data of Blueprint-created variables, function parameters, functions, events, macros, and collapsed graphs.
 
 Supports Unreal Engine 5.1 and later.
 
@@ -8,7 +8,7 @@ Supports Unreal Engine 5.1 and later.
 
 ## Editing Meta Data
 
-The plugin adds a new `Meta Data` section to the details panel of Blueprint Variables and Functions. Here, any exposed meta data values can be set.
+The plugin adds a new `Meta Data` section to the details panel of Blueprint Variables, Functions, Events, and Function Parameters. Here, any exposed meta data values can be set.
 
 ![](./Resources/readme_ForceInlineRow.gif)
 
@@ -27,6 +27,7 @@ For Meta Data Keys meant only for functions, the **Supported Property Types** li
 See these pages for documentation on various meta data options:
 - [benui's all UPROPERTY specifiers](https://benui.ca/unreal/uproperty/)
 - [benui's all UFUNCTION specifiers](https://benui.ca/unreal/ufunction/)
+- [benui's all UPARAM specifiers](https://benui.ca/unreal/uparam/)
 - [Unreal Engine 5.2 UProperty specifiers](https://docs.unrealengine.com/5.2/en-US/unreal-engine-uproperty-specifiers/#metadataspecifiers)
 - [Unreal Engine 5.3 Function specifiers](https://docs.unrealengine.com/5.3/en-US/ufunctions-in-unreal-engine/#metadataspecifiers)
 
@@ -38,9 +39,8 @@ See these pages for documentation on various meta data options:
 
 ## FYI
 
-* If a meta data key is removed from the Project Settings, that meta data key will continue to exist on properties and functions.
-In the future, these could be displayed in the meta data section with the option to remove them.
+* If a meta data key is removed from the Project Settings, or the specific meta data type is disabled, that meta data key will continue to exist on variables, functions, events, and parameters.
 
-* There currently isn't a way to set meta data for function parameters. I don't think it would be impossible to add in the future though.
+* An advanced/hidden feature to view and edit raw meta data will be added in the future
 
-* I couldn't find any useful Meta Data Keys for collapsed graphs so I disabled it by default. It can be re-enabled in the Project Settings.
+* I couldn't find any useful Meta Data Keys for collapsed graphs/macros so I disabled it by default. It can be re-enabled in the Project Settings.

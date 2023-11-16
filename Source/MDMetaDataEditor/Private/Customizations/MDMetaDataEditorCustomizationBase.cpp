@@ -10,6 +10,7 @@
 #include "IDetailGroup.h"
 #include "K2Node_CustomEvent.h"
 #include "K2Node_FunctionEntry.h"
+#include "K2Node_FunctionResult.h"
 #include "K2Node_Tunnel.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "ScopedTransaction.h"
@@ -73,6 +74,45 @@ namespace MDMDECB_Private
 
 		return nullptr;
 	}
+
+	FProperty* FindNodeProperty(const UK2Node_EditablePinBase* Node, const TSharedPtr<FUserPinInfo>& PinInfo)
+	{
+		// Specifically grab the generated class, not the skeleton class so that UMDMetaDataEditorBlueprintCompilerExtension can grab the meta data after the BP is compiled
+
+		const UBlueprint* Blueprint = IsValid(Node) ? Node->GetBlueprint() : nullptr;
+		const UClass* Class = IsValid(Blueprint) ? Blueprint->GeneratedClass : nullptr;
+		const UFunction* Function = nullptr;
+
+		if (const UK2Node_FunctionResult* ResultNode = Cast<UK2Node_FunctionResult>(Node))
+		{
+			// Function result nodes cannot resolve the UFunction, so find the entry node and use that for finding the UFunction
+			TArray<UK2Node_FunctionEntry*> EntryNodes;
+			ResultNode->GetGraph()->GetNodesOfClass(EntryNodes);
+			Node = EntryNodes[0];
+		}
+
+		if (const UK2Node_FunctionEntry* FunctionNode = Cast<UK2Node_FunctionEntry>(Node))
+		{
+			const FName FunctionName = (FunctionNode->CustomGeneratedFunctionName != NAME_None) ? FunctionNode->CustomGeneratedFunctionName : FunctionNode->GetGraph()->GetFName();
+			Function = Class->FindFunctionByName(FunctionName);
+		}
+		else if (const UK2Node_Event* EventNode = Cast<UK2Node_Event>(Node))
+		{
+			FName SearchName = EventNode->EventReference.GetMemberName();
+			if (SearchName.IsNone())
+			{
+				SearchName = EventNode->CustomFunctionName;
+			}
+			Function = Class->FindFunctionByName(SearchName);
+		}
+
+		if (!IsValid(Function) || !PinInfo.IsValid())
+		{
+			return nullptr;
+		}
+
+		return Function->FindPropertyByName(PinInfo->PinName);
+	}
 }
 
 FMDMetaDataEditorCustomizationBase::FMDMetaDataEditorCustomizationBase(const TWeakPtr<IBlueprintEditor>& BlueprintEditor, TWeakObjectPtr<UBlueprint>&& BlueprintPtr)
@@ -105,8 +145,10 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 	bool bIsFunction = false;
 	bool bIsProperty = false;
 
+	const UMDMetaDataEditorConfig* Config = GetDefault<UMDMetaDataEditorConfig>();
 	UObject* Obj = ObjectsBeingCustomized[0].Get();
 	UPropertyWrapper* PropertyWrapper = Cast<UPropertyWrapper>(Obj);
+	UK2Node_EditablePinBase* Node = nullptr;
 	if (FProperty* Prop = PropertyWrapper ? PropertyWrapper->GetProperty() : nullptr)
 	{
 		if (Prop->IsNative() || Prop->GetOwnerUObject() == nullptr)
@@ -120,47 +162,66 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 	}
 	else if (UK2Node_FunctionEntry* Function = MDMDECB_Private::FindNode<UK2Node_FunctionEntry, false>(Obj))
 	{
-		FunctionBeingCustomized = Function;
+		if (Config->bEnableMetaDataEditorForFunctions)
+		{
+			FunctionBeingCustomized = Function;
+		}
+
 		bIsFunction = true;
+		Node = Function;
+		bIsReadOnly |= !Function->bIsEditable;
 	}
 	else if (UK2Node_Tunnel* Tunnel = MDMDECB_Private::FindNode<UK2Node_Tunnel, true>(Obj))
 	{
-		TunnelBeingCustomized = Tunnel;
+		if (Config->bEnableMetaDataEditorForTunnels)
+		{
+			TunnelBeingCustomized = Tunnel;
+		}
+
 		bIsFunction = true;
+		Node = Tunnel;
+		bIsReadOnly |= !Tunnel->bIsEditable;
 	}
 	else if (UK2Node_CustomEvent* Event = MDMDECB_Private::FindNode<UK2Node_CustomEvent, false>(Obj))
 	{
-		EventBeingCustomized = Event;
+		if (Config->bEnableMetaDataEditorForFunctions)
+		{
+			EventBeingCustomized = Event;
+		}
+
 		bIsFunction = true;
+		Node = Event;
+		bIsReadOnly |= !Event->bIsEditable;
 	}
 
 	if (bIsProperty)
 	{
 		// Put Meta Data above Default Value for Variables
-		const int32 MetaDataSortOrder = DetailLayout.EditCategory("Variable").GetSortOrder() + 1;
-		DetailLayout.EditCategory("MetaData").SetSortOrder(MetaDataSortOrder);
-		DetailLayout.EditCategory("DefaultValue").SetSortOrder(MetaDataSortOrder + 1);
+		int32 MetaDataSortOrder = DetailLayout.EditCategory("Variable").GetSortOrder();
+		DetailLayout.EditCategory("MetaData").SetSortOrder(++MetaDataSortOrder);
+		DetailLayout.EditCategory("DefaultValue").SetSortOrder(++MetaDataSortOrder);
 	}
 	else if (bIsFunction)
 	{
 		// Put Meta Data above Inputs for Functions
-		const int32 MetaDataSortOrder = DetailLayout.EditCategory("Graph").GetSortOrder() + 1;
-		DetailLayout.EditCategory("MetaData").SetSortOrder(MetaDataSortOrder);
-		DetailLayout.EditCategory("Inputs").SetSortOrder(MetaDataSortOrder + 1);
+		int32 MetaDataSortOrder = DetailLayout.EditCategory("Graph").GetSortOrder();
+		DetailLayout.EditCategory("MetaData").SetSortOrder(++MetaDataSortOrder);
+		DetailLayout.EditCategory("Inputs").SetSortOrder(++MetaDataSortOrder);
+		DetailLayout.EditCategory("Outputs").SetSortOrder(++MetaDataSortOrder);
 	}
 
 	TMap<FName, IDetailGroup*> GroupMap;
 
 	auto AddMetaDataKey = [this, &DetailLayout, &GroupMap, bIsReadOnly](const FMDMetaDataKey& Key)
 	{
-		if (Key.RequiredMetaData != Key.Key && !Key.RequiredMetaData.IsNone() && !HasMetaDataValue(Key.RequiredMetaData))
+		if (Key.RequiredMetaData != Key.Key && !Key.RequiredMetaData.IsNone() && !HasMetaDataValue(Key.RequiredMetaData, nullptr))
 		{
 			return;
 		}
 
 		for (const FName& IncompatibleKey : Key.IncompatibleMetaData)
 		{
-			if (IncompatibleKey != Key.Key && !IncompatibleKey.IsNone() && HasMetaDataValue(IncompatibleKey))
+			if (IncompatibleKey != Key.Key && !IncompatibleKey.IsNone() && HasMetaDataValue(IncompatibleKey, nullptr))
 			{
 				return;
 			}
@@ -203,13 +264,13 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			: Category.AddCustomRow(Key.GetFilterText());
 
 		const FUIAction CopyAction = {
-			FExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CopyMetaData, Key.Key),
-			FCanExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CanCopyMetaData, Key.Key)
+			FExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CopyMetaData, Key.Key, TWeakFieldPtr<FProperty>()),
+			FCanExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CanCopyMetaData, Key.Key, TWeakFieldPtr<FProperty>())
 		};
 
 		const FUIAction PasteAction = {
-			FExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::PasteMetaData, Key.Key),
-			FCanExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CanPasteMetaData, Key.Key)
+			FExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::PasteMetaData, Key.Key, TWeakFieldPtr<FProperty>()),
+			FCanExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CanPasteMetaData, Key.Key, TWeakFieldPtr<FProperty>())
 		};
 
 		MetaDataRow
@@ -225,7 +286,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			]
 			.ValueContent()
 			[
-				CreateMetaDataValueWidget(Key)
+				CreateMetaDataValueWidget(Key, nullptr)
 			]
 			.ExtensionContent()
 			[
@@ -234,8 +295,8 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 				.ToolTipText(INVTEXT("Remove this meta data from this property"))
 				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 				.ContentPadding(0)
-				.Visibility(this, &FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility, Key.Key)
-				.OnClicked(this, &FMDMetaDataEditorCustomizationBase::OnRemoveMetaData, Key.Key)
+				.Visibility(this, &FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility, Key.Key, TWeakFieldPtr<FProperty>())
+				.OnClicked(this, &FMDMetaDataEditorCustomizationBase::OnRemoveMetaData, Key.Key, TWeakFieldPtr<FProperty>())
 				.Content()
 				[
 					SNew(SImage)
@@ -245,50 +306,192 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			];
 	};
 
-	const UMDMetaDataEditorConfig* Config = GetDefault<UMDMetaDataEditorConfig>();
-	if (bIsProperty)
+	if (const FProperty* Property = PropertyBeingCustomized.Get())
 	{
-		Config->ForEachVariableMetaDataKey(Blueprint, PropertyBeingCustomized.Get(), AddMetaDataKey);
+		if (Cast<UFunction>(Property->GetOwnerUObject()))
+		{
+			Config->ForEachLocalVariableMetaDataKey(Blueprint, Property, AddMetaDataKey);
+		}
+		else
+		{
+			Config->ForEachVariableMetaDataKey(Blueprint, Property, AddMetaDataKey);
+		}
 	}
-	else if (bIsFunction)
+	else if (IsValid(Node))
 	{
-		Config->ForEachFunctionMetaDataKey(Blueprint, AddMetaDataKey);
+		if (FunctionBeingCustomized.IsValid() || TunnelBeingCustomized.IsValid() || EventBeingCustomized.IsValid())
+		{
+			Config->ForEachFunctionMetaDataKey(Blueprint, AddMetaDataKey);
+		}
+
+		// TODO - Refactor - Adding the param meta data logic made this file/class a mess. Consider pulling that logic out.
+		if (Config->bEnableMetaDataEditorForFunctionParameters)
+		{
+			TMap<FName, IDetailGroup*> ParamGroupMap;
+
+			// Lazy init the groups so that they're not added unless we actually have meta keys to show
+			IDetailGroup* InputsGroupPtr = nullptr;
+			auto GetInputsGroup = [&InputsGroupPtr, &DetailLayout]() -> IDetailGroup&
+			{
+				if (InputsGroupPtr == nullptr)
+				{
+					InputsGroupPtr = &DetailLayout.EditCategory("Inputs").AddGroup(TEXT("ParamMetaData"), INVTEXT("Param Meta Data"));
+				}
+
+				return *InputsGroupPtr;
+			};
+
+			IDetailGroup* OutputsGroupPtr = nullptr;
+			auto GetOutputsGroup = [&OutputsGroupPtr, &DetailLayout]() -> IDetailGroup&
+			{
+				if (OutputsGroupPtr == nullptr)
+				{
+					OutputsGroupPtr = &DetailLayout.EditCategory("Outputs").AddGroup(TEXT("ParamMetaData"), INVTEXT("Param Meta Data"));
+				}
+
+				return *OutputsGroupPtr;
+			};
+
+			for (const TSharedPtr<FUserPinInfo>& PinInfo : Node->UserDefinedPins)
+			{
+				FProperty* ParamProperty = MDMDECB_Private::FindNodeProperty(Node, PinInfo);
+				if (ParamProperty == nullptr)
+				{
+					continue;
+				}
+
+				auto AddParamMetaDataKey =
+					[this, &DetailLayout, &ParamGroupMap, bIsReadOnly, ParamProperty, &GetInputsGroup, &GetOutputsGroup, Direction = PinInfo->DesiredPinDirection](const FMDMetaDataKey& Key)
+				{
+					if (Key.RequiredMetaData != Key.Key && !Key.RequiredMetaData.IsNone() && !HasMetaDataValue(Key.RequiredMetaData, MakeWeakFieldPtr(ParamProperty)))
+					{
+						return;
+					}
+
+					for (const FName& IncompatibleKey : Key.IncompatibleMetaData)
+					{
+						if (IncompatibleKey != Key.Key && !IncompatibleKey.IsNone() && HasMetaDataValue(IncompatibleKey, MakeWeakFieldPtr(ParamProperty)))
+						{
+							return;
+						}
+					}
+
+					IDetailGroup& RootGroup = (Direction == EGPD_Output) ? GetInputsGroup() : GetOutputsGroup();
+
+					FName GroupName = ParamProperty->GetFName();
+					IDetailGroup* Group = (ParamGroupMap.Contains(GroupName))
+						? ParamGroupMap.FindRef(GroupName)
+						: ParamGroupMap.Add(GroupName, &RootGroup.AddGroup(GroupName, ParamProperty->GetDisplayNameText()));
+					TArray<FString> Subgroups;
+					Key.Category.ParseIntoArray(Subgroups, TEXT("|"));
+					for (const FString& Subgroup : Subgroups)
+					{
+						const FText DisplayName = FText::FromString(Subgroup);
+						if (DisplayName.IsEmptyOrWhitespace())
+						{
+							continue;
+						}
+
+						GroupName = *FString::Printf(TEXT("%s|%s"), *GroupName.ToString(), *Subgroup);
+
+						if (ParamGroupMap.Contains(GroupName))
+						{
+							Group = ParamGroupMap.FindRef(GroupName);
+						}
+						else if (Group != nullptr)
+						{
+							Group = &Group->AddGroup(GroupName, DisplayName);
+							ParamGroupMap.Add(GroupName, Group);
+						}
+						else
+						{
+							Group = &RootGroup.AddGroup(GroupName, DisplayName);
+							ParamGroupMap.Add(GroupName, Group);
+						}
+					}
+
+					const FUIAction CopyAction = {
+						FExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CopyMetaData, Key.Key, MakeWeakFieldPtr(ParamProperty)),
+						FCanExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CanCopyMetaData, Key.Key, MakeWeakFieldPtr(ParamProperty))
+					};
+
+					const FUIAction PasteAction = {
+						FExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::PasteMetaData, Key.Key, MakeWeakFieldPtr(ParamProperty)),
+						FCanExecuteAction::CreateSP(this, &FMDMetaDataEditorCustomizationBase::CanPasteMetaData, Key.Key, MakeWeakFieldPtr(ParamProperty))
+					};
+
+					Group->AddWidgetRow().FilterString(Key.GetFilterText())
+						.CopyAction(CopyAction)
+						.PasteAction(PasteAction)
+						.IsValueEnabled(!bIsReadOnly)
+						.NameContent()
+						[
+							SNew(STextBlock)
+							.Font(DetailLayout.GetDetailFont())
+							.Text(Key.GetKeyDisplayText())
+							.ToolTipText(Key.GetToolTipText())
+						]
+						.ValueContent()
+						[
+							CreateMetaDataValueWidget(Key, ParamProperty)
+						]
+						.ExtensionContent()
+						[
+							SNew(SButton)
+							.IsFocusable(false)
+							.ToolTipText(INVTEXT("Remove this meta data from this parameter"))
+							.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+							.ContentPadding(0)
+							.Visibility(this, &FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility, Key.Key, MakeWeakFieldPtr(ParamProperty))
+							.OnClicked(this, &FMDMetaDataEditorCustomizationBase::OnRemoveMetaData, Key.Key, MakeWeakFieldPtr(ParamProperty))
+							.Content()
+							[
+								SNew(SImage)
+								.Image(FAppStyle::GetBrush("Icons.X"))
+								.ColorAndOpacity(FSlateColor::UseForeground())
+							]
+						];
+				};
+
+				Config->ForEachParameterMetaDataKey(Blueprint, ParamProperty, AddParamMetaDataKey);
+			}
+		}
 	}
 }
 
-EVisibility FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility(FName Key) const
+EVisibility FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
-	return HasMetaDataValue(Key) ? EVisibility::Visible : EVisibility::Collapsed;
+	return HasMetaDataValue(Key, PropertyPtr) ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
-FReply FMDMetaDataEditorCustomizationBase::OnRemoveMetaData(FName Key)
+FReply FMDMetaDataEditorCustomizationBase::OnRemoveMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr)
 {
-	RemoveMetaDataKey(Key);
+	RemoveMetaDataKey(Key, PropertyPtr);
 
 	return FReply::Handled();
 }
 
-TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidget(const FMDMetaDataKey& Key)
+TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidget(const FMDMetaDataKey& Key, FProperty* Property)
 {
 	if (Key.KeyType == EMDMetaDataEditorKeyType::Flag)
 	{
 		return SNew(SCheckBox)
-			.ToolTipText(this, &FMDMetaDataEditorCustomizationBase::GetCheckBoxToolTip<false>, Key.Key)
-			.IsChecked(this, &FMDMetaDataEditorCustomizationBase::IsChecked<false>, Key.Key)
-			.OnCheckStateChanged(this, &FMDMetaDataEditorCustomizationBase::HandleChecked<false>, Key.Key);
+			.ToolTipText(this, &FMDMetaDataEditorCustomizationBase::GetCheckBoxToolTip<false>, Key.Key, MakeWeakFieldPtr(Property))
+			.IsChecked(this, &FMDMetaDataEditorCustomizationBase::IsChecked<false>, Key.Key, MakeWeakFieldPtr(Property))
+			.OnCheckStateChanged(this, &FMDMetaDataEditorCustomizationBase::HandleChecked<false>, Key.Key, MakeWeakFieldPtr(Property));
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::Boolean)
 	{
 		return SNew(SCheckBox)
-			.ToolTipText(this, &FMDMetaDataEditorCustomizationBase::GetCheckBoxToolTip<true>, Key.Key)
-			.IsChecked(this, &FMDMetaDataEditorCustomizationBase::IsChecked<true>, Key.Key)
-			.OnCheckStateChanged(this, &FMDMetaDataEditorCustomizationBase::HandleChecked<true>, Key.Key);
+			.ToolTipText(this, &FMDMetaDataEditorCustomizationBase::GetCheckBoxToolTip<true>, Key.Key, MakeWeakFieldPtr(Property))
+			.IsChecked(this, &FMDMetaDataEditorCustomizationBase::IsChecked<true>, Key.Key, MakeWeakFieldPtr(Property))
+			.OnCheckStateChanged(this, &FMDMetaDataEditorCustomizationBase::HandleChecked<true>, Key.Key, MakeWeakFieldPtr(Property));
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::String)
 	{
 		return SNew(SEditableTextBox)
-			.Text(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueText, Key.Key)
-			.OnTextCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueTextCommitted, Key.Key)
+			.Text(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueText, Key.Key, MakeWeakFieldPtr(Property))
+			.OnTextCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueTextCommitted, Key.Key, MakeWeakFieldPtr(Property))
 			.RevertTextOnEscape(true);
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::Integer)
@@ -315,8 +518,8 @@ TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidge
 				.MinSliderValue(Key.MinSliderInt)
 				.MaxSliderValue(Key.MaxSliderInt)
 				.UndeterminedString(INVTEXT("-"))
-				.Value(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueInt, Key.Key)
-				.OnValueCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueIntCommitted, Key.Key)
+				.Value(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueInt, Key.Key, MakeWeakFieldPtr(Property))
+				.OnValueCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueIntCommitted, Key.Key, MakeWeakFieldPtr(Property))
 			];
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::Float)
@@ -343,8 +546,8 @@ TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidge
 				.MinSliderValue(Key.MinSliderFloat)
 				.MaxSliderValue(Key.MaxSliderFloat)
 				.UndeterminedString(INVTEXT("-"))
-				.Value(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueFloat, Key.Key)
-				.OnValueCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueFloatCommitted, Key.Key)
+				.Value(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValueFloat, Key.Key, MakeWeakFieldPtr(Property))
+				.OnValueCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataValueFloatCommitted, Key.Key, MakeWeakFieldPtr(Property))
 			];
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::GameplayTag)
@@ -352,39 +555,39 @@ TSharedRef<SWidget> FMDMetaDataEditorCustomizationBase::CreateMetaDataValueWidge
 		return SNew(SMDMetaDataGameplayTagPicker)
 			.Key(Key.Key)
 			.bMultiSelect(false)
-			.OnRemoveMetaData(this, &FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey)
-			.OnSetMetaData(this, &FMDMetaDataEditorCustomizationBase::SetMetaDataValue)
-			.MetaDataValue(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValue, Key.Key);
+			.OnRemoveMetaData(this, &FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey, MakeWeakFieldPtr(Property))
+			.OnSetMetaData(this, &FMDMetaDataEditorCustomizationBase::SetMetaDataValue, MakeWeakFieldPtr(Property))
+			.MetaDataValue(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValue, Key.Key, MakeWeakFieldPtr(Property));
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::GameplayTagContainer)
 	{
 		return SNew(SMDMetaDataGameplayTagPicker)
 			.Key(Key.Key)
 			.bMultiSelect(true)
-			.OnRemoveMetaData(this, &FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey)
-			.OnSetMetaData(this, &FMDMetaDataEditorCustomizationBase::SetMetaDataValue)
-			.MetaDataValue(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValue, Key.Key);
+			.OnRemoveMetaData(this, &FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey, MakeWeakFieldPtr(Property))
+			.OnSetMetaData(this, &FMDMetaDataEditorCustomizationBase::SetMetaDataValue, MakeWeakFieldPtr(Property))
+			.MetaDataValue(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValue, Key.Key, MakeWeakFieldPtr(Property));
 	}
 	else if (Key.KeyType == EMDMetaDataEditorKeyType::ValueList)
 	{
 		return SNew(SMDMetaDataStringComboBox)
 			.Key(Key.Key)
 			.ValueList(Key.ValueList)
-			.OnSetMetaData(this, &FMDMetaDataEditorCustomizationBase::SetMetaDataValue)
-			.MetaDataValue(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValue, Key.Key);
+			.OnSetMetaData(this, &FMDMetaDataEditorCustomizationBase::SetMetaDataValue, MakeWeakFieldPtr(Property))
+			.MetaDataValue(this, &FMDMetaDataEditorCustomizationBase::GetMetaDataValue, Key.Key, MakeWeakFieldPtr(Property));
 	}
 
 	return SNullWidget::NullWidget;
 }
 
-void FMDMetaDataEditorCustomizationBase::AddMetaDataKey(const FName& Key)
+void FMDMetaDataEditorCustomizationBase::AddMetaDataKey(const FName& Key, TWeakFieldPtr<FProperty> PropertyPtr)
 {
-	SetMetaDataValue(Key, TEXT(""));
+	SetMetaDataValue(Key, TEXT(""), PropertyPtr);
 }
 
-void FMDMetaDataEditorCustomizationBase::SetMetaDataValue(const FName& Key, const FString& Value)
+void FMDMetaDataEditorCustomizationBase::SetMetaDataValue(const FName& Key, const FString& Value, TWeakFieldPtr<FProperty> PropertyPtr)
 {
-	TOptional<FString> CurrentValue = GetMetaDataValue(Key);
+	TOptional<FString> CurrentValue = GetMetaDataValue(Key, PropertyPtr);
 	if (CurrentValue.IsSet() && CurrentValue->Equals(Value))
 	{
 		return;
@@ -392,76 +595,98 @@ void FMDMetaDataEditorCustomizationBase::SetMetaDataValue(const FName& Key, cons
 
 	FScopedTransaction Transaction(FText::Format(INVTEXT("Set Meta Data [{0}={1}]"), FText::FromName(Key), FText::FromString(Value)));
 
-	if (FProperty* Property = PropertyBeingCustomized.Get())
+	if (FProperty* ParamProperty = PropertyPtr.Get())
 	{
-		if (UBlueprint* Blueprint = BlueprintPtr.Get())
+		if (UObject* ParamOwner = ParamProperty->GetOwnerUObject())
 		{
-			bool bDidFindMetaData = false;
+			ParamOwner->Modify();
+		}
 
-			for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
+		ParamProperty->SetMetaData(Key, FString(Value));
+	}
+	else
+	{
+		if (FProperty* Property = PropertyBeingCustomized.Get())
+		{
+			if (UBlueprint* Blueprint = BlueprintPtr.Get())
 			{
-				if (VariableDescription.VarName == Property->GetFName())
-				{
-					Blueprint->Modify();
-					Property->SetMetaData(Key, FString(Value));
-					VariableDescription.SetMetaData(Key, Value);
-					bDidFindMetaData = true;
-				}
-			}
+				bool bDidFindMetaData = false;
 
-			if (!bDidFindMetaData)
-			{
-				// Is it a local variable?
-				if (UK2Node_FunctionEntry* FuncNode = MDMDECB_Private::FindFunctionNode(Blueprint, Cast<UFunction>(Property->GetOwnerUObject())))
+				for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
 				{
-					for (FBPVariableDescription& VariableDescription : FuncNode->LocalVariables)
+					if (VariableDescription.VarName == Property->GetFName())
 					{
-						if (VariableDescription.VarName == Property->GetFName())
+						Blueprint->Modify();
+						Property->SetMetaData(Key, FString(Value));
+						VariableDescription.SetMetaData(Key, Value);
+						bDidFindMetaData = true;
+					}
+				}
+
+				if (!bDidFindMetaData)
+				{
+					// Is it a local variable?
+					if (UK2Node_FunctionEntry* FuncNode = MDMDECB_Private::FindFunctionNode(Blueprint, Cast<UFunction>(Property->GetOwnerUObject())))
+					{
+						for (FBPVariableDescription& VariableDescription : FuncNode->LocalVariables)
 						{
-							FuncNode->Modify();
-							Property->SetMetaData(Key, FString(Value));
-							VariableDescription.SetMetaData(Key, Value);
+							if (VariableDescription.VarName == Property->GetFName())
+							{
+								FuncNode->Modify();
+								Property->SetMetaData(Key, FString(Value));
+								VariableDescription.SetMetaData(Key, Value);
+							}
 						}
 					}
 				}
 			}
 		}
-	}
 
-	FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
+		FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
 
-	if (UK2Node_FunctionEntry* FuncNode = FunctionBeingCustomized.Get())
-	{
-		FuncNode->Modify();
-		MetaData = &(FuncNode->MetaData);
-	}
-	else if (UK2Node_Tunnel* TunnelNode = TunnelBeingCustomized.Get())
-	{
-		TunnelNode->Modify();
-		MetaData = &(TunnelNode->MetaData);
-	}
-	else if (UK2Node_CustomEvent* EventNode = EventBeingCustomized.Get())
-	{
-		EventNode->Modify();
-		MetaData = &(EventNode->GetUserDefinedMetaData());
-	}
+		if (UK2Node_FunctionEntry* FuncNode = FunctionBeingCustomized.Get())
+		{
+			FuncNode->Modify();
+			MetaData = &(FuncNode->MetaData);
+		}
+		else if (UK2Node_Tunnel* TunnelNode = TunnelBeingCustomized.Get())
+		{
+			TunnelNode->Modify();
+			MetaData = &(TunnelNode->MetaData);
+		}
+		else if (UK2Node_CustomEvent* EventNode = EventBeingCustomized.Get())
+		{
+			EventNode->Modify();
+			MetaData = &(EventNode->GetUserDefinedMetaData());
+		}
 
-	if (MetaData != nullptr)
-	{
-		MetaData->SetMetaData(Key, FString(Value));
+		if (MetaData != nullptr)
+		{
+			MetaData->SetMetaData(Key, FString(Value));
+		}
 	}
 
 	FBlueprintEditorUtils::MarkBlueprintAsModified(BlueprintPtr.Get());
 }
 
-bool FMDMetaDataEditorCustomizationBase::HasMetaDataValue(const FName& Key) const
+bool FMDMetaDataEditorCustomizationBase::HasMetaDataValue(const FName& Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
-	return GetMetaDataValue(Key).IsSet();
+	return GetMetaDataValue(Key, PropertyPtr).IsSet();
 }
 
-TOptional<FString> FMDMetaDataEditorCustomizationBase::GetMetaDataValue(FName Key) const
+TOptional<FString> FMDMetaDataEditorCustomizationBase::GetMetaDataValue(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
 	TOptional<FString> Value;
+
+	if (const FProperty* ParamProperty = PropertyPtr.Get())
+	{
+		if (ParamProperty->HasMetaData(Key))
+		{
+			Value = ParamProperty->GetMetaData(Key);
+		}
+
+		return Value;
+	}
 
 	if (const FProperty* Prop = PropertyBeingCustomized.Get())
 	{
@@ -508,87 +733,100 @@ TOptional<FString> FMDMetaDataEditorCustomizationBase::GetMetaDataValue(FName Ke
 	return Value;
 }
 
-void FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey(const FName& Key)
+void FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey(const FName& Key, TWeakFieldPtr<FProperty> PropertyPtr)
 {
-	if (!HasMetaDataValue(Key))
+	if (!HasMetaDataValue(Key, PropertyPtr))
 	{
 		return;
 	}
 
 	FScopedTransaction Transaction(FText::Format(INVTEXT("Removed Meta Data [{0}]"), FText::FromName(Key)));
-	if (FProperty* Property = PropertyBeingCustomized.Get())
+
+	if (FProperty* ParamProperty = PropertyPtr.Get())
 	{
-		if (UBlueprint* Blueprint = BlueprintPtr.Get())
+		if (UObject* ParamOwner = ParamProperty->GetOwnerUObject())
 		{
-			bool bDidFindMetaData = false;
+			ParamOwner->Modify();
+		}
 
-			for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
+		ParamProperty->RemoveMetaData(Key);
+	}
+	else
+	{
+		if (FProperty* Property = PropertyBeingCustomized.Get())
+		{
+			if (UBlueprint* Blueprint = BlueprintPtr.Get())
 			{
-				if (VariableDescription.VarName == Property->GetFName())
-				{
-					Blueprint->Modify();
-					Property->RemoveMetaData(Key);
-					VariableDescription.RemoveMetaData(Key);
-					bDidFindMetaData = false;
-				}
-			}
+				bool bDidFindMetaData = false;
 
-			if (!bDidFindMetaData)
-			{
-				// Is it a local variable?
-				if (UK2Node_FunctionEntry* FuncNode = MDMDECB_Private::FindFunctionNode(Blueprint, Cast<UFunction>(Property->GetOwnerUObject())))
+				for (FBPVariableDescription& VariableDescription : Blueprint->NewVariables)
 				{
-					for (FBPVariableDescription& VariableDescription : FuncNode->LocalVariables)
+					if (VariableDescription.VarName == Property->GetFName())
 					{
-						if (VariableDescription.VarName == Property->GetFName())
+						Blueprint->Modify();
+						Property->RemoveMetaData(Key);
+						VariableDescription.RemoveMetaData(Key);
+						bDidFindMetaData = false;
+					}
+				}
+
+				if (!bDidFindMetaData)
+				{
+					// Is it a local variable?
+					if (UK2Node_FunctionEntry* FuncNode = MDMDECB_Private::FindFunctionNode(Blueprint, Cast<UFunction>(Property->GetOwnerUObject())))
+					{
+						for (FBPVariableDescription& VariableDescription : FuncNode->LocalVariables)
 						{
-							FuncNode->Modify();
-							Property->RemoveMetaData(Key);
-							VariableDescription.RemoveMetaData(Key);
+							if (VariableDescription.VarName == Property->GetFName())
+							{
+								FuncNode->Modify();
+								Property->RemoveMetaData(Key);
+								VariableDescription.RemoveMetaData(Key);
+							}
 						}
 					}
 				}
 			}
 		}
-	}
 
-	FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
+		FKismetUserDeclaredFunctionMetadata* MetaData = nullptr;
 
-	if (UK2Node_FunctionEntry* FuncNode = Cast<UK2Node_FunctionEntry>(FunctionBeingCustomized.Get()))
-	{
-		MetaData = &(FuncNode->MetaData);
-	}
-	else if (UK2Node_Tunnel* TunnelNode = Cast<UK2Node_Tunnel>(TunnelBeingCustomized.Get()))
-	{
-		MetaData = &(TunnelNode->MetaData);
-	}
-	else if (UK2Node_CustomEvent* EventNode = Cast<UK2Node_CustomEvent>(EventBeingCustomized.Get()))
-	{
-		MetaData = &(EventNode->GetUserDefinedMetaData());
-	}
+		if (UK2Node_FunctionEntry* FuncNode = Cast<UK2Node_FunctionEntry>(FunctionBeingCustomized.Get()))
+		{
+			MetaData = &(FuncNode->MetaData);
+		}
+		else if (UK2Node_Tunnel* TunnelNode = Cast<UK2Node_Tunnel>(TunnelBeingCustomized.Get()))
+		{
+			MetaData = &(TunnelNode->MetaData);
+		}
+		else if (UK2Node_CustomEvent* EventNode = Cast<UK2Node_CustomEvent>(EventBeingCustomized.Get()))
+		{
+			MetaData = &(EventNode->GetUserDefinedMetaData());
+		}
 
-	if (MetaData != nullptr)
-	{
-		MetaData->RemoveMetaData(Key);
+		if (MetaData != nullptr)
+		{
+			MetaData->RemoveMetaData(Key);
+		}
 	}
 
 	FBlueprintEditorUtils::MarkBlueprintAsModified(BlueprintPtr.Get());
 }
 
-void FMDMetaDataEditorCustomizationBase::CopyMetaData(FName Key) const
+void FMDMetaDataEditorCustomizationBase::CopyMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
-	const TOptional<FString> Value = GetMetaDataValue(Key);
+	const TOptional<FString> Value = GetMetaDataValue(Key, PropertyPtr);
 
 	// Copy in Key=Value format
 	FPlatformApplicationMisc::ClipboardCopy(*FString::Printf(TEXT("%s=\"%s\""), *Key.ToString(), *Value.Get(TEXT("")).ReplaceCharWithEscapedChar()));
 }
 
-bool FMDMetaDataEditorCustomizationBase::CanCopyMetaData(FName Key) const
+bool FMDMetaDataEditorCustomizationBase::CanCopyMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
-	return HasMetaDataValue(Key);
+	return HasMetaDataValue(Key, PropertyPtr);
 }
 
-void FMDMetaDataEditorCustomizationBase::PasteMetaData(FName Key)
+void FMDMetaDataEditorCustomizationBase::PasteMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr)
 {
 	FString Clipboard;
 	FPlatformApplicationMisc::ClipboardPaste(Clipboard);
@@ -609,7 +847,7 @@ void FMDMetaDataEditorCustomizationBase::PasteMetaData(FName Key)
 			}
 
 			const FString ClipValue = Clipboard.Mid(EqualIndex + 1).TrimStartAndEnd().TrimQuotes();
-			SetMetaDataValue(Key, Clipboard.ReplaceEscapedCharWithChar());
+			SetMetaDataValue(Key, Clipboard.ReplaceEscapedCharWithChar(), PropertyPtr);
 		}
 	}
 
@@ -617,11 +855,11 @@ void FMDMetaDataEditorCustomizationBase::PasteMetaData(FName Key)
 	if (!Clipboard.IsEmpty())
 	{
 		Clipboard.TrimQuotesInline();
-		SetMetaDataValue(Key, Clipboard.ReplaceEscapedCharWithChar());
+		SetMetaDataValue(Key, Clipboard.ReplaceEscapedCharWithChar(), PropertyPtr);
 	}
 }
 
-bool FMDMetaDataEditorCustomizationBase::CanPasteMetaData(FName Key) const
+bool FMDMetaDataEditorCustomizationBase::CanPasteMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
 	FString Clipboard;
 	FPlatformApplicationMisc::ClipboardPaste(Clipboard);
@@ -645,58 +883,58 @@ bool FMDMetaDataEditorCustomizationBase::CanPasteMetaData(FName Key) const
 	return !Clipboard.IsEmpty();
 }
 
-FText FMDMetaDataEditorCustomizationBase::GetMetaDataValueText(FName Key) const
+FText FMDMetaDataEditorCustomizationBase::GetMetaDataValueText(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
-	return FText::FromString(GetMetaDataValue(Key).Get(TEXT("")));
+	return FText::FromString(GetMetaDataValue(Key, PropertyPtr).Get(TEXT("")));
 }
 
-void FMDMetaDataEditorCustomizationBase::OnMetaDataValueTextCommitted(const FText& NewText, ETextCommit::Type InTextCommit, FName Key)
+void FMDMetaDataEditorCustomizationBase::OnMetaDataValueTextCommitted(const FText& NewText, ETextCommit::Type InTextCommit, FName Key, TWeakFieldPtr<FProperty> PropertyPtr)
 {
 	if (InTextCommit == ETextCommit::OnEnter || InTextCommit == ETextCommit::OnUserMovedFocus)
 	{
 		if (!NewText.IsEmptyOrWhitespace())
 		{
-			SetMetaDataValue(Key, NewText.ToString());
+			SetMetaDataValue(Key, NewText.ToString(), PropertyPtr);
 		}
 		else
 		{
-			RemoveMetaDataKey(Key);
+			RemoveMetaDataKey(Key, PropertyPtr);
 		}
 	}
 }
 
-TOptional<int32> FMDMetaDataEditorCustomizationBase::GetMetaDataValueInt(FName Key) const
+TOptional<int32> FMDMetaDataEditorCustomizationBase::GetMetaDataValueInt(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
-	TOptional<FString> Value = GetMetaDataValue(Key);
+	TOptional<FString> Value = GetMetaDataValue(Key, PropertyPtr);
 	return Value.IsSet() ? TOptional<int32>(FCString::Atoi(*Value.GetValue())) : TOptional<int32>{};
 }
 
-void FMDMetaDataEditorCustomizationBase::OnMetaDataValueIntCommitted(int32 Value, ETextCommit::Type InTextCommit, FName Key)
+void FMDMetaDataEditorCustomizationBase::OnMetaDataValueIntCommitted(int32 Value, ETextCommit::Type InTextCommit, FName Key, TWeakFieldPtr<FProperty> PropertyPtr)
 {
 	if (InTextCommit == ETextCommit::OnEnter || InTextCommit == ETextCommit::OnUserMovedFocus)
 	{
-		SetMetaDataValue(Key, FString::FromInt(Value));
+		SetMetaDataValue(Key, FString::FromInt(Value), PropertyPtr);
 	}
 }
 
-TOptional<float> FMDMetaDataEditorCustomizationBase::GetMetaDataValueFloat(FName Key) const
+TOptional<float> FMDMetaDataEditorCustomizationBase::GetMetaDataValueFloat(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
-	TOptional<FString> Value = GetMetaDataValue(Key);
+	TOptional<FString> Value = GetMetaDataValue(Key, PropertyPtr);
 	return Value.IsSet() ? TOptional<float>(FCString::Atof(*Value.GetValue())) : TOptional<float>{};
 }
 
-void FMDMetaDataEditorCustomizationBase::OnMetaDataValueFloatCommitted(float Value, ETextCommit::Type InTextCommit, FName Key)
+void FMDMetaDataEditorCustomizationBase::OnMetaDataValueFloatCommitted(float Value, ETextCommit::Type InTextCommit, FName Key, TWeakFieldPtr<FProperty> PropertyPtr)
 {
 	if (InTextCommit == ETextCommit::OnEnter || InTextCommit == ETextCommit::OnUserMovedFocus)
 	{
-		SetMetaDataValue(Key, FString::SanitizeFloat(Value));
+		SetMetaDataValue(Key, FString::SanitizeFloat(Value), PropertyPtr);
 	}
 }
 
 template <bool bIsBoolean>
-ECheckBoxState FMDMetaDataEditorCustomizationBase::IsChecked(FName Key) const
+ECheckBoxState FMDMetaDataEditorCustomizationBase::IsChecked(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
-	TOptional<FString> Value = GetMetaDataValue(Key);
+	TOptional<FString> Value = GetMetaDataValue(Key, PropertyPtr);
 
 	if (Value.IsSet() && Value.GetValue() == MDMDECB_Private::MultipleValues)
 	{
@@ -720,29 +958,29 @@ ECheckBoxState FMDMetaDataEditorCustomizationBase::IsChecked(FName Key) const
 }
 
 template <bool bIsBoolean>
-void FMDMetaDataEditorCustomizationBase::HandleChecked(ECheckBoxState State, FName Key)
+void FMDMetaDataEditorCustomizationBase::HandleChecked(ECheckBoxState State, FName Key, TWeakFieldPtr<FProperty> PropertyPtr)
 {
 	if constexpr (bIsBoolean)
 	{
-		SetMetaDataValue(Key, (State == ECheckBoxState::Checked) ? TEXT("true") : TEXT("false"));
+		SetMetaDataValue(Key, (State == ECheckBoxState::Checked) ? TEXT("true") : TEXT("false"), PropertyPtr);
 	}
 	else
 	{
 		if (State == ECheckBoxState::Checked)
 		{
-			AddMetaDataKey(Key);
+			AddMetaDataKey(Key, PropertyPtr);
 		}
 		else
 		{
-			RemoveMetaDataKey(Key);
+			RemoveMetaDataKey(Key, PropertyPtr);
 		}
 	}
 }
 
 template <bool bIsBoolean>
-FText FMDMetaDataEditorCustomizationBase::GetCheckBoxToolTip(FName Key) const
+FText FMDMetaDataEditorCustomizationBase::GetCheckBoxToolTip(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const
 {
-	switch (IsChecked<bIsBoolean>(Key))
+	switch (IsChecked<bIsBoolean>(Key, PropertyPtr))
 	{
 	case ECheckBoxState::Unchecked:
 		return bIsBoolean ? INVTEXT("False") : INVTEXT("Unset");

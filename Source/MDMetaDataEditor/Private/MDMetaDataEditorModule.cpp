@@ -29,7 +29,7 @@ void FMDMetaDataEditorModule::StartupModule()
 		LocalVariableCustomizationHandle = BlueprintEditorModule.RegisterLocalVariableCustomization(FProperty::StaticClass(), FOnGetVariableCustomizationInstance::CreateStatic(&FMDMetaDataEditorVariableCustomization::MakeInstance));
 	}
 
-	if (Config->bEnableMetaDataEditorForFunctions)
+	if (Config->bEnableMetaDataEditorForFunctions || Config->bEnableMetaDataEditorForFunctionParameters)
 	{
 		FunctionCustomizationHandle = BlueprintEditorModule.RegisterFunctionCustomization(UK2Node_FunctionEntry::StaticClass(), FOnGetFunctionCustomizationInstance::CreateStatic(&FMDMetaDataEditorFunctionCustomization::MakeInstance));
 	}
@@ -39,7 +39,7 @@ void FMDMetaDataEditorModule::StartupModule()
 		TunnelCustomizationHandle = BlueprintEditorModule.RegisterFunctionCustomization(UK2Node_Tunnel::StaticClass(), FOnGetFunctionCustomizationInstance::CreateStatic(&FMDMetaDataEditorFunctionCustomization::MakeInstance));
 	}
 
-	if (Config->bEnableMetaDataEditorForCustomEvents)
+	if (Config->bEnableMetaDataEditorForCustomEvents || Config->bEnableMetaDataEditorForFunctionParameters)
 	{
 		EventCustomizationHandle = BlueprintEditorModule.RegisterFunctionCustomization(UK2Node_CustomEvent::StaticClass(), FOnGetFunctionCustomizationInstance::CreateStatic(&FMDMetaDataEditorFunctionCustomization::MakeInstance));
 	}

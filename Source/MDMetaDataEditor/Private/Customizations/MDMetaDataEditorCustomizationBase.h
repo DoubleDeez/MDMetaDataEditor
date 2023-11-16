@@ -34,37 +34,37 @@ public:
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailLayout) override;
 
 private:
-	EVisibility GetRemoveMetaDataButtonVisibility(FName Key) const;
-	FReply OnRemoveMetaData(FName Key);
+	EVisibility GetRemoveMetaDataButtonVisibility(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
+	FReply OnRemoveMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr);
 
-	TSharedRef<SWidget> CreateMetaDataValueWidget(const FMDMetaDataKey& Key);
+	TSharedRef<SWidget> CreateMetaDataValueWidget(const FMDMetaDataKey& Key, FProperty* Property);
 
-	void AddMetaDataKey(const FName& Key);
-	void SetMetaDataValue(const FName& Key, const FString& Value);
-	bool HasMetaDataValue(const FName& Key) const;
-	TOptional<FString> GetMetaDataValue(FName Key) const;
-	void RemoveMetaDataKey(const FName& Key);
+	void AddMetaDataKey(const FName& Key, TWeakFieldPtr<FProperty> PropertyPtr);
+	void SetMetaDataValue(const FName& Key, const FString& Value, TWeakFieldPtr<FProperty> PropertyPtr);
+	bool HasMetaDataValue(const FName& Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
+	TOptional<FString> GetMetaDataValue(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
+	void RemoveMetaDataKey(const FName& Key, TWeakFieldPtr<FProperty> PropertyPtr);
 
-	void CopyMetaData(FName Key) const;
-	bool CanCopyMetaData(FName Key) const;
-	void PasteMetaData(FName Key);
-	bool CanPasteMetaData(FName Key) const;
+	void CopyMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
+	bool CanCopyMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
+	void PasteMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr);
+	bool CanPasteMetaData(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
 
 	template<bool bIsBoolean>
-	ECheckBoxState IsChecked(FName Key) const;
+	ECheckBoxState IsChecked(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
 	template<bool bIsBoolean>
-	void HandleChecked(ECheckBoxState State, FName Key);
+	void HandleChecked(ECheckBoxState State, FName Key, TWeakFieldPtr<FProperty> PropertyPtr);
 	template<bool bIsBoolean>
-	FText GetCheckBoxToolTip(FName Key) const;
+	FText GetCheckBoxToolTip(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
 
-	FText GetMetaDataValueText(FName Key) const;
-	void OnMetaDataValueTextCommitted(const FText& NewText, ETextCommit::Type InTextCommit, FName Key);
+	FText GetMetaDataValueText(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
+	void OnMetaDataValueTextCommitted(const FText& NewText, ETextCommit::Type InTextCommit, FName Key, TWeakFieldPtr<FProperty> PropertyPtr);
 
-	TOptional<int32> GetMetaDataValueInt(FName Key) const;
-	void OnMetaDataValueIntCommitted(int32 Value, ETextCommit::Type InTextCommit, FName Key);
+	TOptional<int32> GetMetaDataValueInt(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
+	void OnMetaDataValueIntCommitted(int32 Value, ETextCommit::Type InTextCommit, FName Key, TWeakFieldPtr<FProperty> PropertyPtr);
 
-	TOptional<float> GetMetaDataValueFloat(FName Key) const;
-	void OnMetaDataValueFloatCommitted(float Value, ETextCommit::Type InTextCommit, FName Key);
+	TOptional<float> GetMetaDataValueFloat(FName Key, TWeakFieldPtr<FProperty> PropertyPtr) const;
+	void OnMetaDataValueFloatCommitted(float Value, ETextCommit::Type InTextCommit, FName Key, TWeakFieldPtr<FProperty> PropertyPtr);
 
 	TWeakPtr<IBlueprintEditor> BlueprintEditor;
 	TWeakObjectPtr<UBlueprint> BlueprintPtr;

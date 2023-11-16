@@ -25,6 +25,9 @@ public:
 	virtual FText GetSectionText() const override;
 
 	void ForEachVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachLocalVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachParameterMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachPropertyMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
 	void ForEachFunctionMetaDataKey(const UBlueprint* Blueprint, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
 
 	// If true, the meta data keys will automatically be sorted alphabetically
@@ -43,11 +46,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
 	bool bEnableMetaDataEditorForCustomEvents = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", DisplayName = "Enable Meta Data Editor for Collapsed Graphs")
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", DisplayName = "Enable Meta Data Editor for Collapsed Graphs and Macros")
 	bool bEnableMetaDataEditorForTunnels = false;
 
+	// Param meta data only works for Function/Event parameters
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
+	bool bEnableMetaDataEditorForFunctionParameters = true;
+
 #if WITH_EDITOR
-	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif //WITH_EDITOR
 
 private:
