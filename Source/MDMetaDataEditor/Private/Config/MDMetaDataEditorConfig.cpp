@@ -7,8 +7,9 @@
 #include "Components/Widget.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
-#include "WidgetBlueprint.h"
 #include "MDMetaDataEditorModule.h"
+#include "Modules/ModuleManager.h"
+#include "WidgetBlueprint.h"
 
 UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 {
