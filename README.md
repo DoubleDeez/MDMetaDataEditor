@@ -10,6 +10,10 @@ Supports Unreal Engine 5.1 and later.
 
 The plugin adds a new `Meta Data` section to the details panel of Blueprint Variables, Functions, Events, and Function Parameters. Here, any exposed meta data values can be set.
 
+### Advanced
+
+An advanced raw meta data editor can be enabled via Editor Preferences -> General -> Meta Data Editor (Local Only). This will enabling the raw strings of key-value meta data pairs.
+
 ![](./Resources/readme_ForceInlineRow.gif)
 
 ![](./Resources/readme_EditCondition.gif)
@@ -40,7 +44,5 @@ See these pages for documentation on various meta data options:
 ## FYI
 
 * If a meta data key is removed from the Project Settings, or the specific meta data type is disabled, that meta data key will continue to exist on variables, functions, events, and parameters.
-
-* An advanced/hidden feature to view and edit raw meta data will be added in the future
 
 * I couldn't find any useful Meta Data Keys for collapsed graphs/macros so I disabled it by default. It can be re-enabled in the Project Settings.
