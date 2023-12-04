@@ -156,7 +156,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 	UK2Node_EditablePinBase* Node = nullptr;
 	if (FProperty* Prop = PropertyWrapper ? PropertyWrapper->GetProperty() : nullptr)
 	{
-		bIsReadOnly = Prop->IsNative() || !(IsValid(Prop->GetOwnerUObject()) && Prop->GetOwnerUObject()->IsA<UFunction>()) && !FBlueprintEditorUtils::IsVariableCreatedByBlueprint(Blueprint, Prop);
+		bIsReadOnly = Prop->IsNative() || (!(IsValid(Prop->GetOwnerUObject()) && Prop->GetOwnerUObject()->IsA<UFunction>()) && !FBlueprintEditorUtils::IsVariableCreatedByBlueprint(Blueprint, Prop));
 		PropertyBeingCustomized = Prop;
 		bIsProperty = true;
 	}
