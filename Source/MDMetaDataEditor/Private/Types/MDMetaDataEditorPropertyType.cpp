@@ -243,6 +243,23 @@ bool FMDMetaDataEditorPropertyType::DoesMatchProperty(const FProperty* Property)
 		&& PropertySubTypeMemberReference == PinType.PinSubCategoryMemberReference;
 }
 
+void FMDMetaDataEditorPropertyType::FixUp()
+{
+	// Float/Double types must be set to Real. The sub type is Float/Double.
+	// If Float/Double is the primary type, then move it to subtype, and set the primary type to Real.
+	if((PropertyType == UEdGraphSchema_K2::PC_Float || PropertyType == UEdGraphSchema_K2::PC_Double) && PropertySubType == NAME_None)
+	{
+		PropertySubType = PropertyType;
+		PropertyType = UEdGraphSchema_K2::PC_Real;
+	}
+
+	// Real type needs a subtype, default to Double.
+	if (PropertyType == UEdGraphSchema_K2::PC_Real && PropertySubType == NAME_None)
+	{
+		PropertySubType = UEdGraphSchema_K2::PC_Double;
+	}
+}
+
 bool FMDMetaDataEditorPropertyType::operator==(const FMDMetaDataEditorPropertyType& Other) const
 {
 	return PropertyType == Other.PropertyType

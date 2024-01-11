@@ -35,9 +35,8 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 	const TSet<FMDMetaDataEditorPropertyType> NumericTypes = {
 		{ UEdGraphSchema_K2::PC_Int },
 		{ UEdGraphSchema_K2::PC_Int64 },
-		{ UEdGraphSchema_K2::PC_Float },
-		{ UEdGraphSchema_K2::PC_Double },
-		{ UEdGraphSchema_K2::PC_Real },
+		{ UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Float },
+		{ UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double },
 	};
 	MetaDataKeys.Append({
 			FMDMetaDataKey{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, TEXT("Disables the click and drag functionality for setting the value of this property.") }.SetSupportedProperties(NumericTypes)
@@ -57,9 +56,8 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 
 	// Float types
 	const TSet<FMDMetaDataEditorPropertyType> FloatTypes = {
-		{ UEdGraphSchema_K2::PC_Float },
-		{ UEdGraphSchema_K2::PC_Double },
-		{ UEdGraphSchema_K2::PC_Real },
+		{ UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Float },
+		{ UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double },
 	};
 	MetaDataKeys.Append({
 		FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Float, TEXT("How fast the value should change while dragging to set the value.") }.SetSupportedProperties(FloatTypes).SetMinFloat(1.f),
@@ -223,6 +221,15 @@ void UMDMetaDataEditorConfig::PostInitProperties()
 		{
 			return A.Key.Compare(B.Key) < 0;
 		});
+	}
+
+	// Fix Supported Property Types which may be coming from old configs.
+	for (FMDMetaDataKey& Key : MetaDataKeys)
+	{
+		for (FMDMetaDataEditorPropertyType& SupportedPropertyType : Key.SupportedPropertyTypes)
+		{
+			SupportedPropertyType.FixUp();
+		}
 	}
 }
 
