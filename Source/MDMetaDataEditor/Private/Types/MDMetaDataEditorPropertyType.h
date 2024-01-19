@@ -26,6 +26,25 @@ struct FMDMetaDataEditorPropertyType
 
 public:
 
+	FMDMetaDataEditorPropertyType(
+		FName PropertyType = NAME_None,
+		FName PropertySubType = NAME_None, 
+		TSoftObjectPtr<UObject> PropertySubTypeObject = nullptr,
+		FSimpleMemberReference PropertySubTypeMemberReference = FSimpleMemberReference(),
+		FInstancedStruct ValueType = FInstancedStruct(),
+		EMDMetaDataPropertyContainerType ContainerType = EMDMetaDataPropertyContainerType::None
+		)
+		: PropertyType(PropertyType)
+		, PropertySubType(PropertySubType)
+		, PropertySubTypeObject(PropertySubTypeObject)
+		, PropertySubTypeMemberReference(PropertySubTypeMemberReference)
+		, ValueType(ValueType)
+		, ContainerType(ContainerType)
+	{
+		// Fix any newly constructed property types.
+		FixUp();
+	}
+
 	FEdGraphPinType ToGraphPinType() const;
 	FEdGraphTerminalType ToGraphTerminalType() const;
 
@@ -33,6 +52,8 @@ public:
 	void SetFromGraphTerminalType(const FEdGraphTerminalType& GraphTerminalType);
 
 	bool DoesMatchProperty(const FProperty* Property) const;
+
+	void FixUp();
 
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	FName PropertyType = NAME_None;
