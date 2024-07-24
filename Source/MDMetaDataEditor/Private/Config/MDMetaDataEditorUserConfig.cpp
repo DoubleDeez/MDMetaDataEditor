@@ -5,5 +5,5 @@
 
 FText UMDMetaDataEditorUserConfig::GetSectionText() const
 {
-	return INVTEXT("Meta Data Editor (Local Only)");
+	return INVTEXT("Metadata Editor (Local Only)");
 }

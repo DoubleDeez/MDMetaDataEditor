@@ -7,7 +7,7 @@
 
 
 /**
- * Compiler extension to copy meta data into function local variable properties
+ * Compiler extension to copy metadata into function local variable properties
  */
 UCLASS()
 class UMDMetaDataEditorBlueprintCompilerExtension : public UBlueprintCompilerExtension

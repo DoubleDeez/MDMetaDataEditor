@@ -78,7 +78,7 @@ namespace MDMDECB_Private
 
 	FProperty* FindNodeProperty(const UK2Node_EditablePinBase* Node, const TSharedPtr<FUserPinInfo>& PinInfo)
 	{
-		// Specifically grab the generated class, not the skeleton class so that UMDMetaDataEditorBlueprintCompilerExtension can grab the meta data after the BP is compiled
+		// Specifically grab the generated class, not the skeleton class so that UMDMetaDataEditorBlueprintCompilerExtension can grab the metadata after the BP is compiled
 
 		const UBlueprint* Blueprint = IsValid(Node) ? Node->GetBlueprint() : nullptr;
 		const UClass* Class = IsValid(Blueprint) ? Blueprint->GeneratedClass : nullptr;
@@ -196,16 +196,16 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 
 	if (bIsProperty)
 	{
-		// Put Meta Data above Default Value for Variables
+		// Put Metadata above Default Value for Variables
 		int32 MetaDataSortOrder = DetailLayout.EditCategory("Variable").GetSortOrder();
-		DetailLayout.EditCategory("MetaData").SetSortOrder(++MetaDataSortOrder);
+		DetailLayout.EditCategory("Metadata").SetSortOrder(++MetaDataSortOrder);
 		DetailLayout.EditCategory("DefaultValue").SetSortOrder(++MetaDataSortOrder);
 	}
 	else if (bIsFunction)
 	{
-		// Put Meta Data above Inputs for Functions
+		// Put Metadata above Inputs for Functions
 		int32 MetaDataSortOrder = DetailLayout.EditCategory("Graph").GetSortOrder();
-		DetailLayout.EditCategory("MetaData").SetSortOrder(++MetaDataSortOrder);
+		DetailLayout.EditCategory("Metadata").SetSortOrder(++MetaDataSortOrder);
 		DetailLayout.EditCategory("Inputs").SetSortOrder(++MetaDataSortOrder);
 		DetailLayout.EditCategory("Outputs").SetSortOrder(++MetaDataSortOrder);
 	}
@@ -227,7 +227,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			}
 		}
 
-		IDetailCategoryBuilder& Category = DetailLayout.EditCategory("MetaData");
+		IDetailCategoryBuilder& Category = DetailLayout.EditCategory("Metadata");
 		IDetailGroup* Group = nullptr;
 
 		FName GroupName = NAME_None;
@@ -292,7 +292,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			[
 				SNew(SButton)
 				.IsFocusable(false)
-				.ToolTipText(INVTEXT("Remove this meta data from this property"))
+				.ToolTipText(INVTEXT("Remove this metadata from this property"))
 				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 				.ContentPadding(0)
 				.Visibility(this, &FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility, Key.Key, TWeakFieldPtr<FProperty>())
@@ -341,7 +341,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			Config->ForEachFunctionMetaDataKey(Blueprint, AddMetaDataKey);
 		}
 
-		// TODO - Refactor - Adding the param meta data logic made this file/class a mess. Consider pulling that logic out.
+		// TODO - Refactor - Adding the param metadata logic made this file/class a mess. Consider pulling that logic out.
 		if (Config->bEnableMetaDataEditorForFunctionParameters)
 		{
 			TMap<FName, IDetailGroup*> ParamGroupMap;
@@ -352,7 +352,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			{
 				if (InputsGroupPtr == nullptr)
 				{
-					InputsGroupPtr = &DetailLayout.EditCategory("Inputs").AddGroup(TEXT("ParamMetaData"), INVTEXT("Param Meta Data"));
+					InputsGroupPtr = &DetailLayout.EditCategory("Inputs").AddGroup(TEXT("ParamMetadata"), INVTEXT("Param Metadata"));
 				}
 
 				return *InputsGroupPtr;
@@ -363,7 +363,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 			{
 				if (OutputsGroupPtr == nullptr)
 				{
-					OutputsGroupPtr = &DetailLayout.EditCategory("Outputs").AddGroup(TEXT("ParamMetaData"), INVTEXT("Param Meta Data"));
+					OutputsGroupPtr = &DetailLayout.EditCategory("Outputs").AddGroup(TEXT("ParamMetadata"), INVTEXT("Param Metadata"));
 				}
 
 				return *OutputsGroupPtr;
@@ -456,7 +456,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 						[
 							SNew(SButton)
 							.IsFocusable(false)
-							.ToolTipText(INVTEXT("Remove this meta data from this parameter"))
+							.ToolTipText(INVTEXT("Remove this metadata from this parameter"))
 							.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 							.ContentPadding(0)
 							.Visibility(this, &FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility, Key.Key, MakeWeakFieldPtr(ParamProperty))
@@ -481,7 +481,7 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 						? ParamGroupMap.FindRef(GroupName)
 						: ParamGroupMap.Add(GroupName, &RootGroup.AddGroup(GroupName, ParamProperty->GetDisplayNameText()));
 
-					IDetailGroup& RawMetaDataGroup = Group->AddGroup(TEXT("RawMetaData"), INVTEXT("Raw Meta Data"), true);
+					IDetailGroup& RawMetaDataGroup = Group->AddGroup(TEXT("RawMetadata"), INVTEXT("Raw Metadata"), true);
 					AddRawMetaDataEditor(ParamMetaDataMap, RawMetaDataGroup, bIsReadOnly, ParamProperty);
 				}
 			}
@@ -491,8 +491,8 @@ void FMDMetaDataEditorCustomizationBase::CustomizeDetails(IDetailLayoutBuilder& 
 	if (UserConfig->bEnableRawMetaDataEditor && (!bIsReadOnly || (MetaDataMap != nullptr && !MetaDataMap->IsEmpty())))
 	{
 		IDetailGroup& RawMetaDataGroup = DetailLayout
-			.EditCategory("MetaData")
-			.AddGroup(TEXT("RawMetaData"), INVTEXT("Raw Meta Data"), true);
+			.EditCategory("Metadata")
+			.AddGroup(TEXT("RawMetadata"), INVTEXT("Raw Metadata"), true);
 		AddRawMetaDataEditor(MetaDataMap, RawMetaDataGroup, bIsReadOnly, nullptr);
 	}
 }
@@ -656,7 +656,7 @@ void FMDMetaDataEditorCustomizationBase::AddRawMetaDataEditor(const TMap<FName, 
 				[
 					SNew(SButton)
 					.IsFocusable(false)
-					.ToolTipText(INVTEXT("Remove this meta data"))
+					.ToolTipText(INVTEXT("Remove this metadata"))
 					.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 					.ContentPadding(0)
 					.Visibility(this, &FMDMetaDataEditorCustomizationBase::GetRemoveMetaDataButtonVisibility, MetaDataPair.Key, MakeWeakFieldPtr(Property))
@@ -671,18 +671,18 @@ void FMDMetaDataEditorCustomizationBase::AddRawMetaDataEditor(const TMap<FName, 
 		}
 	}
 
-	// Add meta data row
+	// Add metadata row
 	if (!bIsReadOnly)
 	{
 		RawMetaDataGroup.AddWidgetRow()
-			.FilterString(INVTEXT("Add Meta Data"))
+			.FilterString(INVTEXT("Add Metadata"))
 			.IsEnabled(!bIsReadOnly)
 			.NameContent()
 			.HAlign(HAlign_Fill)
 			[
 				SNew(SEditableTextBox)
 				.Text(FText::GetEmpty())
-				.HintText(INVTEXT("New Meta Data entry..."))
+				.HintText(INVTEXT("New Metadata entry..."))
 				.OnTextCommitted(this, &FMDMetaDataEditorCustomizationBase::OnMetaDataKeyTextCommitted, FName(NAME_None), MakeWeakFieldPtr(Property))
 				.RevertTextOnEscape(true)
 			]
@@ -709,7 +709,7 @@ void FMDMetaDataEditorCustomizationBase::SetMetaDataValue(const FName& Key, cons
 		return;
 	}
 
-	FScopedTransaction Transaction(FText::Format(INVTEXT("Set Meta Data [{0}={1}]"), FText::FromName(Key), FText::FromString(Value)));
+	FScopedTransaction Transaction(FText::Format(INVTEXT("Set Metadata [{0}={1}]"), FText::FromName(Key), FText::FromString(Value)));
 
 	if (FProperty* ParamProperty = PropertyPtr.Get())
 	{
@@ -859,11 +859,11 @@ void FMDMetaDataEditorCustomizationBase::SetMetaDataKey(const FName& OldKey, con
 	TOptional<FString> Value = GetMetaDataValue(OldKey, PropertyPtr);
 	if (!Value.IsSet())
 	{
-		// Not set means we don't have meta data with OldKey
+		// Not set means we don't have metadata with OldKey
 		return;
 	}
 
-	FScopedTransaction Transaction(FText::Format(INVTEXT("Changed Meta Data Key [{0} -> {1}]"), FText::FromName(OldKey), FText::FromName(NewKey)));
+	FScopedTransaction Transaction(FText::Format(INVTEXT("Changed Metadata Key [{0} -> {1}]"), FText::FromName(OldKey), FText::FromName(NewKey)));
 	RemoveMetaDataKey(OldKey, PropertyPtr);
 	SetMetaDataValue(NewKey, Value.GetValue(), PropertyPtr);
 }
@@ -875,7 +875,7 @@ void FMDMetaDataEditorCustomizationBase::RemoveMetaDataKey(const FName& Key, TWe
 		return;
 	}
 
-	FScopedTransaction Transaction(FText::Format(INVTEXT("Removed Meta Data [{0}]"), FText::FromName(Key)));
+	FScopedTransaction Transaction(FText::Format(INVTEXT("Removed Metadata [{0}]"), FText::FromName(Key)));
 
 	if (FProperty* ParamProperty = PropertyPtr.Get())
 	{
@@ -1111,7 +1111,7 @@ ECheckBoxState FMDMetaDataEditorCustomizationBase::IsChecked(FName Key, TWeakFie
 
 	if constexpr (bIsBoolean)
 	{
-		// Don't assume unset == false, a meta data key could have different behaviour between the 2.
+		// Don't assume unset == false, a metadata key could have different behaviour between the 2.
 		if (!Value.IsSet())
 		{
 			return ECheckBoxState::Undetermined;

@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "MDMetaDataEditor",
-	"Description": "Unreal Engine 5.1+ plugin to enable editing meta data of Blueprint Properties and Functions",
+	"Description": "Unreal Engine 5.1+ plugin to enable editing metadata of Blueprint Properties and Functions",
 	"Category": "Editor",
 	"CreatedBy": "Dylan Dumesnil",
 	"CreatedByURL": "https://github.com/DoubleDeez",

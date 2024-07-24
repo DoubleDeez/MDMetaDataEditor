@@ -55,7 +55,7 @@ FText FMDMetaDataKey::GetToolTipText() const
 	FString ToolTip = Description;
 	if (bUseDisplayNameOverride)
 	{
-		ToolTip += "\r\n\r\nMeta Data Key: \"" + Key.ToString() + "\"";
+		ToolTip += "\r\n\r\nMetadata Key: \"" + Key.ToString() + "\"";
 	}
 	return FText::FromString(ToolTip);
 }
