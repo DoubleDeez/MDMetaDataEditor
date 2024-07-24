@@ -235,7 +235,7 @@ void UMDMetaDataEditorConfig::PostInitProperties()
 
 FText UMDMetaDataEditorConfig::GetSectionText() const
 {
-	return INVTEXT("Meta Data Editor");
+	return INVTEXT("Metadata Editor");
 }
 
 void UMDMetaDataEditorConfig::ForEachVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const

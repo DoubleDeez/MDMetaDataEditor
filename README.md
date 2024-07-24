@@ -1,34 +1,34 @@
 # MDMetaDataEditor
 
-MDMetaDataEditor enables editing the meta data of Blueprint-created variables, function parameters, functions, events, macros, and collapsed graphs.
+MDMetaDataEditor enables editing the metadata of Blueprint-created variables, function parameters, functions, events, macros, and collapsed graphs.
 
 Supports Unreal Engine 5.1 and later.
 
 ![](./Resources/readme_GameplayTagFilter.gif)
 
-## Editing Meta Data
+## Editing Metadata
 
-The plugin adds a new `Meta Data` section to the details panel of Blueprint Variables, Functions, Events, and Function Parameters. Here, any exposed meta data values can be set.
+The plugin adds a new `Metadata` section to the details panel of Blueprint Variables, Functions, Events, and Function Parameters. Here, any exposed metadata values can be set.
 
 ### Advanced
 
-An advanced raw meta data editor can be enabled via Editor Preferences -> General -> Meta Data Editor (Local Only). This will enabling the raw strings of key-value meta data pairs.
+An advanced raw metadata editor can be enabled via Editor Preferences -> General -> Metadata Editor (Local Only). This will enabling the raw strings of key-value metadata pairs.
 
 ![](./Resources/readme_ForceInlineRow.gif)
 
 ![](./Resources/readme_EditCondition.gif)
 
-## Configuring Meta Data Keys
-By default, the plugin comes with some common meta data keys pre-configured.
-The list of available Meta Data Keys that are exposed to Blueprint can be configured in **Project Settings -> Editor -> Meta Data Editor**.
+## Configuring Metadata Keys
+By default, the plugin comes with some common metadata keys pre-configured.
+The list of available Metadata Keys that are exposed to Blueprint can be configured in **Project Settings -> Editor -> Metadata Editor**.
 
-Here, Meta Data Keys can be added, removed, and modified. By default, new keys are set up to work for any variable type in any blueprint.
+Here, Metadata Keys can be added, removed, and modified. By default, new keys are set up to work for any variable type in any blueprint.
 
-The **Key Type** should match the expected type of the meta data key, that will also determine which widget is displayed for setting the value of the meta data.
+The **Key Type** should match the expected type of the metadata key, that will also determine which widget is displayed for setting the value of the metadata.
 
-For Meta Data Keys meant only for functions, the **Supported Property Types** list should be empty and have **Can be Used by Functions** checked.
+For Metadata Keys meant only for functions, the **Supported Property Types** list should be empty and have **Can be Used by Functions** checked.
 
-See these pages for documentation on various meta data options:
+See these pages for documentation on various metadata options:
 - [benui's all UPROPERTY specifiers](https://benui.ca/unreal/uproperty/)
 - [benui's all UFUNCTION specifiers](https://benui.ca/unreal/ufunction/)
 - [benui's all UPARAM specifiers](https://benui.ca/unreal/uparam/)
@@ -43,6 +43,6 @@ See these pages for documentation on various meta data options:
 
 ## FYI
 
-* If a meta data key is removed from the Project Settings, or the specific meta data type is disabled, that meta data key will continue to exist on variables, functions, events, and parameters.
+* If a metadata key is removed from the Project Settings, or the specific metadata type is disabled, that metadata key will continue to exist on variables, functions, events, and parameters.
 
-* I couldn't find any useful Meta Data Keys for collapsed graphs/macros so I disabled it by default. It can be re-enabled in the Project Settings.
+* I couldn't find any useful Metadata Keys for collapsed graphs/macros so I disabled it by default. It can be re-enabled in the Project Settings.

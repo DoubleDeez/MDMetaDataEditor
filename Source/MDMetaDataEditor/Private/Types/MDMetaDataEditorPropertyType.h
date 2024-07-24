@@ -55,23 +55,23 @@ public:
 
 	void FixUp();
 
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditAnywhere, Config, Category = "Metadata Editor")
 	FName PropertyType = NAME_None;
 
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditAnywhere, Config, Category = "Metadata Editor")
 	FName PropertySubType = NAME_None;
 
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditAnywhere, Config, Category = "Metadata Editor")
 	TSoftObjectPtr<UObject> PropertySubTypeObject;
 
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditAnywhere, Config, Category = "Metadata Editor")
 	FSimpleMemberReference PropertySubTypeMemberReference;
 
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditAnywhere, Config, Category = "Metadata Editor")
 	FInstancedStruct ValueType;
 	FMDMetaDataEditorPropertyType& SetValueType(FMDMetaDataEditorPropertyType&& InValueType) { ValueType.InitializeAs<FMDMetaDataEditorPropertyType>(InValueType); return *this; }
 
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditAnywhere, Config, Category = "Metadata Editor")
 	EMDMetaDataPropertyContainerType ContainerType = EMDMetaDataPropertyContainerType::None;
 	FMDMetaDataEditorPropertyType& SetContainerType(EMDMetaDataPropertyContainerType InContainerType) { ContainerType = InContainerType; return *this; }
 

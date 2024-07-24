@@ -30,7 +30,7 @@ namespace MDMDEBCE_Private
 		return nullptr;
 	}
 
-	// Inits meta data on function-related properties (params & variables) that the engine doesn't already support
+	// Inits metadata on function-related properties (params & variables) that the engine doesn't already support
 	void InitFunctionNodeMetaData(const UK2Node_FunctionEntry& FunctionNode, const UClass* OldClass, const UBlueprint* Blueprint)
 	{
 		auto InitFunctionMetaData = [&FunctionNode, &OldClass](const UFunction* Function)
@@ -40,7 +40,7 @@ namespace MDMDEBCE_Private
 				return;
 			}
 
-			// Only functions created in the blueprint can have meta data set
+			// Only functions created in the blueprint can have metadata set
 			const UFunction* SuperFunc = Function->GetSuperFunction();
 			while (IsValid(SuperFunc))
 			{

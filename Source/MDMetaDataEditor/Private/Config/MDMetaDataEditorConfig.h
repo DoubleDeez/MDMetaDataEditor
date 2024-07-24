@@ -9,7 +9,7 @@
 #include "MDMetaDataEditorConfig.generated.h"
 
 /**
- * Configure which meta data keys will display on blueprint Properties and Functions.
+ * Configure which metadata keys will display on blueprint Properties and Functions.
  * Can be setup per Blueprint type and Property type.
  */
 UCLASS(DefaultConfig, Config = Editor, MinimalAPI)
@@ -30,27 +30,27 @@ public:
 	void ForEachPropertyMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
 	void ForEachFunctionMetaDataKey(const UBlueprint* Blueprint, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
 
-	// If true, the meta data keys will automatically be sorted alphabetically
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
+	// If true, the metadata keys will automatically be sorted alphabetically
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Metadata Editor")
 	bool bSortMetaDataAlphabetically = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Metadata Editor")
 	bool bEnableMetaDataEditorForVariables = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Metadata Editor")
 	bool bEnableMetaDataEditorForLocalVariables = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Metadata Editor")
 	bool bEnableMetaDataEditorForFunctions = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Metadata Editor")
 	bool bEnableMetaDataEditorForCustomEvents = true;
 
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor", DisplayName = "Enable Meta Data Editor for Collapsed Graphs and Macros")
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Metadata Editor", DisplayName = "Enable Metadata Editor for Collapsed Graphs and Macros")
 	bool bEnableMetaDataEditorForTunnels = false;
 
-	// Param meta data only works for Function/Event parameters
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
+	// Param metadata only works for Function/Event parameters
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Metadata Editor")
 	bool bEnableMetaDataEditorForFunctionParameters = true;
 
 #if WITH_EDITOR
@@ -61,6 +61,6 @@ private:
 	UFUNCTION()
 	TArray<FName> GetMetaDataKeyNames() const;
 
-	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Keys", meta = (TitleProperty = "{Key} ({KeyType})"))
+	UPROPERTY(EditAnywhere, Config, Category = "Metadata Keys", meta = (TitleProperty = "{Key} ({KeyType})"))
 	TArray<FMDMetaDataKey> MetaDataKeys;
 };
