@@ -6,6 +6,7 @@
 #include "Animation/WidgetAnimation.h"
 #include "Components/Widget.h"
 #include "Engine/DataTable.h"
+#include "Engine/UserDefinedStruct.h"
 #include "GameplayTagContainer.h"
 #include "MDMetaDataEditorModule.h"
 #include "Modules/ModuleManager.h"
@@ -39,7 +40,7 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double },
 	};
 	MetaDataKeys.Append({
-			FMDMetaDataKey{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, TEXT("Disables the click and drag functionality for setting the value of this property.") }.SetSupportedProperties(NumericTypes)
+		FMDMetaDataKey{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, TEXT("Disables the click and drag functionality for setting the value of this property.") }.SetSupportedProperties(NumericTypes)
 	});
 
 	// Integers
@@ -51,7 +52,11 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Integer, TEXT("How fast the value should change while dragging to set the value.") }.SetSupportedProperties(IntegerTypes).SetMinInt(1),
 		FMDMetaDataKey{ TEXT("Delta"), EMDMetaDataEditorKeyType::Integer, TEXT("How much to change the value by when dragging.") }.SetSupportedProperties(IntegerTypes),
 		FMDMetaDataKey{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Integer, TEXT("Forces the property value to be a multiple of this value.") }.SetSupportedProperties(IntegerTypes),
-		FMDMetaDataKey{ TEXT("ArrayClamp"), EMDMetaDataEditorKeyType::String, TEXT("Clamps the valid values that can be entered in the UI to be between 0 and the length of the array specified.") }.SetSupportedProperties(IntegerTypes).CanBeUsedOnFunctionParameters(false)
+		FMDMetaDataKey{ TEXT("ArrayClamp"), EMDMetaDataEditorKeyType::String, TEXT("Clamps the valid values that can be entered in the UI to be between 0 and the length of the array specified."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("ClampMin"), EMDMetaDataEditorKeyType::Integer, TEXT("Specifies the minimum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes),
+		FMDMetaDataKey{ TEXT("ClampMax"), EMDMetaDataEditorKeyType::Integer, TEXT("Specifies the maximum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes),
+		FMDMetaDataKey{ TEXT("UIMin"), EMDMetaDataEditorKeyType::Integer, TEXT("Specifies the lowest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes),
+		FMDMetaDataKey{ TEXT("UIMax"), EMDMetaDataEditorKeyType::Integer, TEXT("Specifies the highest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes)
 	});
 
 	// Float types
@@ -62,7 +67,11 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 	MetaDataKeys.Append({
 		FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Float, TEXT("How fast the value should change while dragging to set the value.") }.SetSupportedProperties(FloatTypes).SetMinFloat(1.f),
 		FMDMetaDataKey{ TEXT("Delta"), EMDMetaDataEditorKeyType::Float, TEXT("How much to change the value by when dragging.") }.SetSupportedProperties(FloatTypes),
-		FMDMetaDataKey{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Float, TEXT("Forces the property value to be a multiple of this value.") }.SetSupportedProperties(FloatTypes)
+		FMDMetaDataKey{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Float, TEXT("Forces the property value to be a multiple of this value.") }.SetSupportedProperties(FloatTypes),
+		FMDMetaDataKey{ TEXT("ClampMin"), EMDMetaDataEditorKeyType::Float, TEXT("Specifies the minimum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes),
+		FMDMetaDataKey{ TEXT("ClampMax"), EMDMetaDataEditorKeyType::Float, TEXT("Specifies the maximum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes),
+		FMDMetaDataKey{ TEXT("UIMin"), EMDMetaDataEditorKeyType::Float, TEXT("Specifies the lowest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes),
+		FMDMetaDataKey{ TEXT("UIMax"), EMDMetaDataEditorKeyType::Float, TEXT("Specifies the highest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes)
 	});
 
 	// Non-localized strings
@@ -202,6 +211,11 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		FMDMetaDataKey{ TEXT("DisallowedClasses"), EMDMetaDataEditorKeyType::String, TEXT("Filter out classes that inherit from specific classes or implement specific interfaces from the selection.") }.SetSupportedProperties(AssetTypes)
 	});
 
+	// USTRUCT
+	MetaDataKeys.Append({
+		FMDMetaDataKey{ TEXT("HiddenByDefault"), EMDMetaDataEditorKeyType::Flag, TEXT("Pins in Make and Break nodes are hidden by default.") }.SetStructsOnly(),
+		FMDMetaDataKey{ TEXT("DisableSplitPin"), EMDMetaDataEditorKeyType::Flag, TEXT("Indicates that node pins of this struct type cannot be split.") }.SetStructsOnly()
+	});
 
 	// Sort pre-defined keys
 	MetaDataKeys.Sort([](const FMDMetaDataKey& A, const FMDMetaDataKey& B)
@@ -238,7 +252,7 @@ FText UMDMetaDataEditorConfig::GetSectionText() const
 	return INVTEXT("Meta Data Editor");
 }
 
-void UMDMetaDataEditorConfig::ForEachVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const
+void UMDMetaDataEditorConfig::ForEachVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const
 {
 	ForEachPropertyMetaDataKey(Blueprint, Property, [&Func](const FMDMetaDataKey& Key)
 	{
@@ -249,7 +263,7 @@ void UMDMetaDataEditorConfig::ForEachVariableMetaDataKey(const UBlueprint* Bluep
 	});
 }
 
-void UMDMetaDataEditorConfig::ForEachLocalVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const
+void UMDMetaDataEditorConfig::ForEachLocalVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const
 {
 	ForEachPropertyMetaDataKey(Blueprint, Property, [&Func](const FMDMetaDataKey& Key)
 	{
@@ -260,7 +274,7 @@ void UMDMetaDataEditorConfig::ForEachLocalVariableMetaDataKey(const UBlueprint* 
 	});
 }
 
-void UMDMetaDataEditorConfig::ForEachParameterMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const
+void UMDMetaDataEditorConfig::ForEachParameterMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const
 {
 	ForEachPropertyMetaDataKey(Blueprint, Property, [&Func](const FMDMetaDataKey& Key)
 	{
@@ -271,7 +285,7 @@ void UMDMetaDataEditorConfig::ForEachParameterMetaDataKey(const UBlueprint* Blue
 	});
 }
 
-void UMDMetaDataEditorConfig::ForEachPropertyMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const
+void UMDMetaDataEditorConfig::ForEachPropertyMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const
 {
 	if (!IsValid(Blueprint) || Property == nullptr)
 	{
@@ -292,7 +306,13 @@ void UMDMetaDataEditorConfig::ForEachPropertyMetaDataKey(const UBlueprint* Bluep
 	}
 }
 
-void UMDMetaDataEditorConfig::ForEachFunctionMetaDataKey(const UBlueprint* Blueprint, const TFunction<void(const FMDMetaDataKey&)>& Func) const
+void UMDMetaDataEditorConfig::ForEachStructPropertyMetaDataKey(const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const
+{
+	// Test as if the struct were a basic blueprint
+	ForEachPropertyMetaDataKey(UBlueprint::StaticClass()->GetDefaultObject<UBlueprint>(), Property, Func);
+}
+
+void UMDMetaDataEditorConfig::ForEachFunctionMetaDataKey(const UBlueprint* Blueprint, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const
 {
 	if (!IsValid(Blueprint))
 	{
@@ -302,6 +322,19 @@ void UMDMetaDataEditorConfig::ForEachFunctionMetaDataKey(const UBlueprint* Bluep
 	for (const FMDMetaDataKey& Key : MetaDataKeys)
 	{
 		if (!Key.bCanBeUsedByFunctions || !Key.DoesSupportBlueprint(Blueprint))
+		{
+			continue;
+		}
+
+		Func(Key);
+	}
+}
+
+void UMDMetaDataEditorConfig::ForEachStructMetaDataKey(const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const
+{
+	for (const FMDMetaDataKey& Key : MetaDataKeys)
+	{
+		if (!Key.bCanBeUsedByStructs)
 		{
 			continue;
 		}

@@ -4,6 +4,9 @@
 
 #include "Delegates/IDelegateInstance.h"
 #include "Modules/ModuleInterface.h"
+#include "Templates/SharedPointer.h"
+
+class FMDMetaDataEditorStructChangeHandler;
 
 class FMDMetaDataEditorModule : public IModuleInterface
 {
@@ -15,6 +18,10 @@ public:
 	void RestartModule();
 
 private:
+	void OnAssetEditorOpened(UObject* Asset);
+
+	TSharedPtr<FMDMetaDataEditorStructChangeHandler> StructChangeHandler;
+
 	FDelegateHandle VariableCustomizationHandle;
 	FDelegateHandle LocalVariableCustomizationHandle;
 	FDelegateHandle FunctionCustomizationHandle;

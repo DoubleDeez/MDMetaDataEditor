@@ -8,7 +8,7 @@ Supports Unreal Engine 5.1 and later.
 
 ## Editing Meta Data
 
-The plugin adds a new `Meta Data` section to the details panel of Blueprint Variables, Functions, Events, and Function Parameters. Here, any exposed meta data values can be set.
+The plugin adds a new `Meta Data` section to the details panel of Blueprint Variables, Functions, Events, Function Parameters, Structs and Struct Properties. Here, any exposed meta data values can be set.
 
 ### Advanced
 

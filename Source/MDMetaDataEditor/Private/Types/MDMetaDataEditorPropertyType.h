@@ -25,10 +25,9 @@ struct FMDMetaDataEditorPropertyType
 	GENERATED_BODY()
 
 public:
-
 	FMDMetaDataEditorPropertyType(
 		FName PropertyType = NAME_None,
-		FName PropertySubType = NAME_None, 
+		FName PropertySubType = NAME_None,
 		TSoftObjectPtr<UObject> PropertySubTypeObject = nullptr,
 		FSimpleMemberReference PropertySubTypeMemberReference = FSimpleMemberReference(),
 		FInstancedStruct ValueType = FInstancedStruct(),
@@ -53,8 +52,6 @@ public:
 
 	bool DoesMatchProperty(const FProperty* Property) const;
 
-	void FixUp();
-
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	FName PropertyType = NAME_None;
 
@@ -74,6 +71,8 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	EMDMetaDataPropertyContainerType ContainerType = EMDMetaDataPropertyContainerType::None;
 	FMDMetaDataEditorPropertyType& SetContainerType(EMDMetaDataPropertyContainerType InContainerType) { ContainerType = InContainerType; return *this; }
+
+	void FixUp();
 
 	bool operator==(const FMDMetaDataEditorPropertyType& Other) const;
 	bool operator!=(const FMDMetaDataEditorPropertyType& Other) const

@@ -6,12 +6,16 @@
 #include "Config/MDMetaDataEditorConfig.h"
 #include "Customizations/MDMetaDataEditorFunctionCustomization.h"
 #include "Customizations/MDMetaDataEditorPropertyTypeCustomization.h"
+#include "Customizations/MDMetaDataEditorStructChangeHandler.h"
 #include "Customizations/MDMetaDataEditorVariableCustomization.h"
+#include "Engine/UserDefinedStruct.h"
 #include "K2Node_CustomEvent.h"
 #include "K2Node_FunctionEntry.h"
 #include "K2Node_Tunnel.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Widgets/SMDUserStructMetaDataEditor.h"
 
 void FMDMetaDataEditorModule::StartupModule()
 {
@@ -46,10 +50,34 @@ void FMDMetaDataEditorModule::StartupModule()
 
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyEditorModule.RegisterCustomPropertyTypeLayout(FMDMetaDataEditorPropertyType::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FMDMetaDataEditorPropertyTypeCustomization::MakeInstance));
+
+	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OnAssetEditorOpened().AddRaw(this, &FMDMetaDataEditorModule::OnAssetEditorOpened);
+
+
+
+	if (Config->bEnableMetaDataEditorForStructs)
+	{
+		StructChangeHandler = MakeShared<FMDMetaDataEditorStructChangeHandler>();
+
+		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(SMDUserStructMetaDataEditor::TabId, FOnSpawnTab::CreateStatic(&SMDUserStructMetaDataEditor::CreateStructMetaDataEditorTab, TWeakObjectPtr<UUserDefinedStruct>()))
+			.SetDisplayName(INVTEXT("Metadata"))
+			.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "PropertyEditor.Grid.TabIcon"))
+			.SetMenuType(ETabSpawnerMenuType::Hidden);
+	}
+	else
+	{
+		// Close any existing tabs
+		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(SMDUserStructMetaDataEditor::TabId,
+			FOnSpawnTab::CreateLambda([](const FSpawnTabArgs&) { return SNew(SDockTab); }),
+			FCanSpawnTab::CreateLambda([](const FSpawnTabArgs&) { return false; }))
+			.SetMenuType(ETabSpawnerMenuType::Hidden);
+	}
 }
 
 void FMDMetaDataEditorModule::ShutdownModule()
 {
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SMDUserStructMetaDataEditor::TabId);
+
 	if (FBlueprintEditorModule* BlueprintEditorModule = FModuleManager::GetModulePtr<FBlueprintEditorModule>("Kismet"))
 	{
 		BlueprintEditorModule->UnregisterVariableCustomization(FProperty::StaticClass(), VariableCustomizationHandle);
@@ -59,16 +87,80 @@ void FMDMetaDataEditorModule::ShutdownModule()
 		BlueprintEditorModule->UnregisterFunctionCustomization(UK2Node_CustomEvent::StaticClass(), EventCustomizationHandle);
 	}
 
+	if (GEditor)
+	{
+		if (UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>())
+		{
+			AssetEditorSubsystem->OnAssetEditorOpened().RemoveAll(this);
+		}
+	}
+
 	if (FPropertyEditorModule* PropertyEditorModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
 	{
 		PropertyEditorModule->UnregisterCustomPropertyTypeLayout(FMDMetaDataEditorPropertyType::StaticStruct()->GetFName());
 	}
+
+	StructChangeHandler.Reset();
 }
 
 void FMDMetaDataEditorModule::RestartModule()
 {
 	ShutdownModule();
 	StartupModule();
+}
+
+void FMDMetaDataEditorModule::OnAssetEditorOpened(UObject* Asset)
+{
+	if (!GetDefault<UMDMetaDataEditorConfig>()->bEnableMetaDataEditorForStructs)
+	{
+		return;
+	}
+
+	UUserDefinedStruct* UserDefinedStruct = Cast<UUserDefinedStruct>(Asset);
+	UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+	if (!IsValid(AssetEditorSubsystem) || !IsValid(UserDefinedStruct))
+	{
+		return;
+	}
+
+	static const FName StructEditorName = TEXT("UserDefinedStructureEditor");
+	constexpr bool bFocus = false;
+	IAssetEditorInstance* Editor = AssetEditorSubsystem->FindEditorForAsset(Asset, bFocus);
+	if (Editor == nullptr || Editor->GetEditorName() != StructEditorName)
+	{
+		return;
+	}
+
+	FAssetEditorToolkit* Toolkit = static_cast<FAssetEditorToolkit*>(Editor);
+	if (const TSharedPtr<FTabManager> TabManager = Toolkit->GetTabManager())
+	{
+		TSharedPtr<SDockTab> ExistingTab = TabManager->FindExistingLiveTab(SMDUserStructMetaDataEditor::TabId);
+
+		TabManager->RegisterTabSpawner(SMDUserStructMetaDataEditor::TabId, FOnSpawnTab::CreateStatic(&SMDUserStructMetaDataEditor::CreateStructMetaDataEditorTab, MakeWeakObjectPtr(UserDefinedStruct)))
+			.SetDisplayName(INVTEXT("Metadata"))
+			.SetGroup(Toolkit->GetWorkspaceMenuCategory())
+			.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "PropertyEditor.Grid.TabIcon"))
+			.SetReuseTabMethod(FOnFindTabToReuse::CreateLambda([WeakTabManager = TWeakPtr<FTabManager>(TabManager)](const FTabId& TabId)
+			{
+				if (const TSharedPtr<FTabManager> TabManager = WeakTabManager.Pin())
+				{
+					return TabManager->FindExistingLiveTab(TabId);
+				}
+
+				return TSharedPtr<SDockTab>();
+			}));
+
+		if (ExistingTab.IsValid())
+		{
+			TSharedRef<SMDUserStructMetaDataEditor> StructMetaDataEditor = StaticCastSharedRef<SMDUserStructMetaDataEditor>(ExistingTab->GetContent());
+			StructMetaDataEditor->UpdateStruct(UserDefinedStruct);
+		}
+		else
+		{
+
+			TabManager->TryInvokeTab(SMDUserStructMetaDataEditor::TabId, true);
+		}
+	}
 }
 
 IMPLEMENT_MODULE(FMDMetaDataEditorModule, MDMetaDataEditor)

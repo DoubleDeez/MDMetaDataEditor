@@ -24,13 +24,15 @@ public:
 
 	virtual FText GetSectionText() const override;
 
-	void ForEachVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
-	void ForEachLocalVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
-	void ForEachParameterMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
-	void ForEachPropertyMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
-	void ForEachFunctionMetaDataKey(const UBlueprint* Blueprint, const TFunction<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachLocalVariableMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachParameterMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachPropertyMetaDataKey(const UBlueprint* Blueprint, const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachStructPropertyMetaDataKey(const FProperty* Property, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachFunctionMetaDataKey(const UBlueprint* Blueprint, const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const;
+	void ForEachStructMetaDataKey(const TFunctionRef<void(const FMDMetaDataKey&)>& Func) const;
 
-	// If true, the meta data keys will automatically be sorted alphabetically
+	// If true, the metadata keys will automatically be sorted alphabetically
 	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
 	bool bSortMetaDataAlphabetically = true;
 
@@ -52,6 +54,10 @@ public:
 	// Param meta data only works for Function/Event parameters
 	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
 	bool bEnableMetaDataEditorForFunctionParameters = true;
+
+	// If true, a new Meta Data Editor tab will be added to the User Structure editor
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
+	bool bEnableMetaDataEditorForStructs = true;
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;

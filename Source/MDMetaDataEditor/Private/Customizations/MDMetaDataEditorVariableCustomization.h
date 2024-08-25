@@ -4,6 +4,8 @@
 
 #include "MDMetaDataEditorCustomizationBase.h"
 
+class FMDMetaDataEditorFieldView;
+
 class FMDMetaDataEditorVariableCustomization : public FMDMetaDataEditorCustomizationBase
 {
 public:
@@ -13,4 +15,9 @@ public:
 		: FMDMetaDataEditorCustomizationBase(BlueprintEditor, MoveTemp(BlueprintPtr))
 	{
 	}
+
+	virtual void CustomizeObject(IDetailLayoutBuilder& DetailLayout, UObject* Obj) override;
+
+private:
+	TSharedPtr<FMDMetaDataEditorFieldView> VariableFieldView;
 };

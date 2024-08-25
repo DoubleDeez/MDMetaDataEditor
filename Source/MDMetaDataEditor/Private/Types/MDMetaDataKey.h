@@ -114,7 +114,12 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	bool bCanBeUsedByFunctions = false;
 	FMDMetaDataKey& CanBeUsedByFunctions(bool InCanBeUsedByFunctions) { bCanBeUsedByFunctions = InCanBeUsedByFunctions; return *this; }
-	FMDMetaDataKey& SetFunctionsOnly() { bCanBeUsedByFunctions = true; bCanBeUsedOnFunctionParameters = false; bCanBeUsedOnVariables = false; bCanBeUsedOnLocalVariables = false; ClearSupportedProperties(); return *this; }
+	FMDMetaDataKey& SetFunctionsOnly() { bCanBeUsedByFunctions = true; bCanBeUsedByStructs = false; bCanBeUsedOnFunctionParameters = false; bCanBeUsedOnVariables = false; bCanBeUsedOnLocalVariables = false; ClearSupportedProperties(); return *this; }
+
+	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
+	bool bCanBeUsedByStructs = false;
+	FMDMetaDataKey& CanBeUsedByStructs(bool InCanBeUsedByStructs) { bCanBeUsedByStructs = InCanBeUsedByStructs; return *this; }
+	FMDMetaDataKey& SetStructsOnly() { bCanBeUsedByFunctions = false; bCanBeUsedByStructs = true; bCanBeUsedOnFunctionParameters = false; bCanBeUsedOnVariables = false; bCanBeUsedOnLocalVariables = false; ClearSupportedProperties(); return *this; }
 
 	// Whether or not this meta data can be used on Blueprint Variables
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")

@@ -4,6 +4,9 @@
 
 #include "MDMetaDataEditorCustomizationBase.h"
 
+class UK2Node_EditablePinBase;
+class FMDMetaDataEditorFieldView;
+
 class FMDMetaDataEditorFunctionCustomization : public FMDMetaDataEditorCustomizationBase
 {
 public:
@@ -13,4 +16,12 @@ public:
 		: FMDMetaDataEditorCustomizationBase(BlueprintEditor, MoveTemp(BlueprintPtr))
 	{
 	}
+
+	virtual void CustomizeObject(IDetailLayoutBuilder& DetailLayout, UObject* Obj) override;
+
+private:
+	void InitFieldViews(UObject* Obj);
+
+	TSharedPtr<FMDMetaDataEditorFieldView> FunctionFieldView;
+	TArray<TSharedPtr<FMDMetaDataEditorFieldView>> ParamFieldViews;
 };
