@@ -53,24 +53,9 @@ void FMDMetaDataEditorModule::StartupModule()
 
 	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OnAssetEditorOpened().AddRaw(this, &FMDMetaDataEditorModule::OnAssetEditorOpened);
 
-
-
 	if (Config->bEnableMetaDataEditorForStructs)
 	{
 		StructChangeHandler = MakeShared<FMDMetaDataEditorStructChangeHandler>();
-
-		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(SMDUserStructMetaDataEditor::TabId, FOnSpawnTab::CreateStatic(&SMDUserStructMetaDataEditor::CreateStructMetaDataEditorTab, TWeakObjectPtr<UUserDefinedStruct>()))
-			.SetDisplayName(INVTEXT("Metadata"))
-			.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "PropertyEditor.Grid.TabIcon"))
-			.SetMenuType(ETabSpawnerMenuType::Hidden);
-	}
-	else
-	{
-		// Close any existing tabs
-		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(SMDUserStructMetaDataEditor::TabId,
-			FOnSpawnTab::CreateLambda([](const FSpawnTabArgs&) { return SNew(SDockTab); }),
-			FCanSpawnTab::CreateLambda([](const FSpawnTabArgs&) { return false; }))
-			.SetMenuType(ETabSpawnerMenuType::Hidden);
 	}
 }
 
@@ -111,11 +96,6 @@ void FMDMetaDataEditorModule::RestartModule()
 
 void FMDMetaDataEditorModule::OnAssetEditorOpened(UObject* Asset)
 {
-	if (!GetDefault<UMDMetaDataEditorConfig>()->bEnableMetaDataEditorForStructs)
-	{
-		return;
-	}
-
 	UUserDefinedStruct* UserDefinedStruct = Cast<UUserDefinedStruct>(Asset);
 	UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
 	if (!IsValid(AssetEditorSubsystem) || !IsValid(UserDefinedStruct))
@@ -134,31 +114,21 @@ void FMDMetaDataEditorModule::OnAssetEditorOpened(UObject* Asset)
 	FAssetEditorToolkit* Toolkit = static_cast<FAssetEditorToolkit*>(Editor);
 	if (const TSharedPtr<FTabManager> TabManager = Toolkit->GetTabManager())
 	{
-		TSharedPtr<SDockTab> ExistingTab = TabManager->FindExistingLiveTab(SMDUserStructMetaDataEditor::TabId);
-
-		TabManager->RegisterTabSpawner(SMDUserStructMetaDataEditor::TabId, FOnSpawnTab::CreateStatic(&SMDUserStructMetaDataEditor::CreateStructMetaDataEditorTab, MakeWeakObjectPtr(UserDefinedStruct)))
-			.SetDisplayName(INVTEXT("Metadata"))
-			.SetGroup(Toolkit->GetWorkspaceMenuCategory())
-			.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "PropertyEditor.Grid.TabIcon"))
-			.SetReuseTabMethod(FOnFindTabToReuse::CreateLambda([WeakTabManager = TWeakPtr<FTabManager>(TabManager)](const FTabId& TabId)
-			{
-				if (const TSharedPtr<FTabManager> TabManager = WeakTabManager.Pin())
-				{
-					return TabManager->FindExistingLiveTab(TabId);
-				}
-
-				return TSharedPtr<SDockTab>();
-			}));
-
-		if (ExistingTab.IsValid())
+		// Because we register our tab spawn late, we end up with an unrecognized tab getting saved in the layout, clear it out on launch
+		const FTabId UnrecognizedId(FName(TEXT("Unrecognized")), ETabIdFlags::None);
+		while (TSharedPtr<SDockTab> UnrecognizedTab = TabManager->FindExistingLiveTab(UnrecognizedId))
 		{
-			TSharedRef<SMDUserStructMetaDataEditor> StructMetaDataEditor = StaticCastSharedRef<SMDUserStructMetaDataEditor>(ExistingTab->GetContent());
-			StructMetaDataEditor->UpdateStruct(UserDefinedStruct);
+			UnrecognizedTab->RequestCloseTab();
 		}
-		else
-		{
 
-			TabManager->TryInvokeTab(SMDUserStructMetaDataEditor::TabId, true);
+		if (GetDefault<UMDMetaDataEditorConfig>()->bEnableMetaDataEditorForStructs)
+		{
+			TabManager->RegisterTabSpawner(SMDUserStructMetaDataEditor::TabId, FOnSpawnTab::CreateStatic(&SMDUserStructMetaDataEditor::CreateStructMetaDataEditorTab, MakeWeakObjectPtr(UserDefinedStruct)))
+         		.SetDisplayName(INVTEXT("Metadata"))
+         		.SetGroup(Toolkit->GetWorkspaceMenuCategory())
+         		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "PropertyEditor.Grid.TabIcon"));
+
+			TabManager->TryInvokeTab(SMDUserStructMetaDataEditor::TabId);
 		}
 	}
 }
