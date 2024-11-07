@@ -65,12 +65,12 @@ namespace MDMDEFC_Private
 		return nullptr;
 	}
 
-	FProperty* FindNodeProperty(const UK2Node_EditablePinBase* Node, const TSharedPtr<FUserPinInfo>& PinInfo)
+	FProperty* FindNodeProperty(const UK2Node_EditablePinBase* Node, const TSharedPtr<FUserPinInfo>& PinInfo, bool bUseSkelClass)
 	{
 		// Specifically grab the generated class, not the skeleton class so that UMDMetaDataEditorBlueprintCompilerExtension can grab the meta data after the BP is compiled
 
 		const UBlueprint* Blueprint = IsValid(Node) ? Node->GetBlueprint() : nullptr;
-		const UClass* Class = IsValid(Blueprint) ? Blueprint->GeneratedClass : nullptr;
+		const UClass* Class = IsValid(Blueprint) ? (bUseSkelClass ? Blueprint->SkeletonGeneratedClass : Blueprint->GeneratedClass) : nullptr;
 		const UFunction* Function = nullptr;
 
 		if (const UK2Node_FunctionResult* ResultNode = Cast<UK2Node_FunctionResult>(Node))
@@ -178,13 +178,14 @@ void FMDMetaDataEditorFunctionCustomization::InitFieldViews(UObject* Obj)
 	{
 		for (const TSharedPtr<FUserPinInfo>& PinInfo : Node->UserDefinedPins)
 		{
-			FProperty* ParamProperty = MDMDEFC_Private::FindNodeProperty(Node, PinInfo);
+			FProperty* ParamProperty = MDMDEFC_Private::FindNodeProperty(Node, PinInfo, false);
 			if (ParamProperty == nullptr)
 			{
 				continue;
 			}
+			FProperty* SkeletonProperty = MDMDEFC_Private::FindNodeProperty(Node, PinInfo, true);
 
-			TSharedPtr<FMDMetaDataEditorFieldView> ParamFieldView = MakeShared<FMDMetaDataEditorFieldView>(ParamProperty, Node);
+			TSharedPtr<FMDMetaDataEditorFieldView> ParamFieldView = MakeShared<FMDMetaDataEditorFieldView>(ParamProperty, SkeletonProperty, Node);
 			ParamFieldView->RequestRefresh.BindSP(this, &FMDMetaDataEditorFunctionCustomization::RefreshDetails);
 			ParamFieldViews.Emplace(MoveTemp(ParamFieldView));
 		}
