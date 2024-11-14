@@ -4,6 +4,7 @@
 
 #include "EdGraph/EdGraphPin.h"
 #include "InstancedStruct.h"
+#include "StructUtils/InstancedStruct.h"
 
 #include "MDMetaDataEditorPropertyType.generated.h"
 

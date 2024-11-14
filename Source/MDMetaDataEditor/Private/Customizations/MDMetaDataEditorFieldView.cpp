@@ -17,6 +17,7 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "ScopedTransaction.h"
 #include "SlateOptMacros.h"
+#include "StructUtils/UserDefinedStruct.h"
 #include "Styling/AppStyle.h"
 #include "Types/MDMetaDataKey.h"
 #include "UObject/MetaData.h"
