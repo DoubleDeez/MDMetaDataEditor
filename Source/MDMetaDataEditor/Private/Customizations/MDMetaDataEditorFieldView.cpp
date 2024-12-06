@@ -29,6 +29,10 @@
 #include "Widgets/SMDMetaDataStringComboBox.h"
 #include "Widgets/Text/STextBlock.h"
 
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 5
+#include "StructUtils/UserDefinedStruct.h"
+#endif
+
 namespace MDMDEFV_Private
 {
 	template<typename T, bool bExact>

@@ -5,7 +5,6 @@
 
 #include "EdGraph/EdGraphPin.h"
 #include "EdGraphSchema_K2.h"
-#include "InstancedStruct.h"
 
 FEdGraphPinType FMDMetaDataEditorPropertyType::ToGraphPinType() const
 {
