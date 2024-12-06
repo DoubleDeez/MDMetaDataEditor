@@ -5,11 +5,6 @@
 
 #include "EdGraph/EdGraphPin.h"
 #include "EdGraphSchema_K2.h"
-#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 5
-#include "StructUtils/InstancedStruct.h"
-#else
-#include "InstancedStruct.h"
-#endif
 
 FEdGraphPinType FMDMetaDataEditorPropertyType::ToGraphPinType() const
 {
