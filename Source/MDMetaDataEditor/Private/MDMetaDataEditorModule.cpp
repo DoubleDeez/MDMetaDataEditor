@@ -63,13 +63,17 @@ void FMDMetaDataEditorModule::ShutdownModule()
 {
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SMDUserStructMetaDataEditor::TabId);
 
-	if (FBlueprintEditorModule* BlueprintEditorModule = FModuleManager::GetModulePtr<FBlueprintEditorModule>("Kismet"))
+	// These StaticClasses aren't valid during engine shutdown, gate the unregistration similarly to the logic in FRigVMEditorModule::ShutdownModule()
+	if (!IsEngineExitRequested())
 	{
-		BlueprintEditorModule->UnregisterVariableCustomization(FProperty::StaticClass(), VariableCustomizationHandle);
-		BlueprintEditorModule->UnregisterLocalVariableCustomization(FProperty::StaticClass(), LocalVariableCustomizationHandle);
-		BlueprintEditorModule->UnregisterFunctionCustomization(UK2Node_FunctionEntry::StaticClass(), FunctionCustomizationHandle);
-		BlueprintEditorModule->UnregisterFunctionCustomization(UK2Node_Tunnel::StaticClass(), TunnelCustomizationHandle);
-		BlueprintEditorModule->UnregisterFunctionCustomization(UK2Node_CustomEvent::StaticClass(), EventCustomizationHandle);
+		if (FBlueprintEditorModule* BlueprintEditorModule = FModuleManager::GetModulePtr<FBlueprintEditorModule>("Kismet"))
+		{
+			BlueprintEditorModule->UnregisterVariableCustomization(FProperty::StaticClass(), VariableCustomizationHandle);
+			BlueprintEditorModule->UnregisterLocalVariableCustomization(FProperty::StaticClass(), LocalVariableCustomizationHandle);
+			BlueprintEditorModule->UnregisterFunctionCustomization(UK2Node_FunctionEntry::StaticClass(), FunctionCustomizationHandle);
+			BlueprintEditorModule->UnregisterFunctionCustomization(UK2Node_Tunnel::StaticClass(), TunnelCustomizationHandle);
+			BlueprintEditorModule->UnregisterFunctionCustomization(UK2Node_CustomEvent::StaticClass(), EventCustomizationHandle);
+		}
 	}
 
 	if (GEditor)
