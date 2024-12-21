@@ -217,6 +217,15 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		FMDMetaDataKey{ TEXT("DisableSplitPin"), EMDMetaDataEditorKeyType::Flag, TEXT("Indicates that node pins of this struct type cannot be split.") }.SetStructsOnly()
 	});
 
+	// Instanced Structs
+	TSet<FMDMetaDataEditorPropertyType> InstancedStructs = {
+		{ UEdGraphSchema_K2::PC_Struct, NAME_None, TBaseStructure<FInstancedStruct>::Get() }
+	};
+	AssetTypes.Append(ObjectTypes);
+	MetaDataKeys.Append({
+		FMDMetaDataKey{ TEXT("BaseStruct"), EMDMetaDataEditorKeyType::String, TEXT("The minimum allowable type holdable by this struct.") }.SetSupportedProperties(InstancedStructs),
+	});
+
 	// Sort pre-defined keys
 	MetaDataKeys.Sort([](const FMDMetaDataKey& A, const FMDMetaDataKey& B)
 	{
