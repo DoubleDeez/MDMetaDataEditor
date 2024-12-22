@@ -20,16 +20,16 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 
 	// Any property
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("EditCondition"), EMDMetaDataEditorKeyType::String, TEXT("Enter a condition to determine whether or not this property can be edited. Supports Bools and Enums.") }.CanBeUsedByFunctions(false).CanBeUsedOnFunctionParameters(false),
-		FMDMetaDataKey{ TEXT("EditConditionHides"), EMDMetaDataEditorKeyType::Flag, TEXT("If this property's EditCondition is false, it will be hidden.") }.CanBeUsedByFunctions(false).SetRequiredMetaData(TEXT("EditCondition")).CanBeUsedOnFunctionParameters(false),
-		FMDMetaDataKey{ TEXT("DisplayAfter"), EMDMetaDataEditorKeyType::String, TEXT("In the details panel, this property will be displayed after the property specified here.") }.CanBeUsedByFunctions(false).CanBeUsedOnFunctionParameters(false),
-		FMDMetaDataKey{ TEXT("DisplayPriority"), EMDMetaDataEditorKeyType::Integer, TEXT("The priority to display this property in the deatils panel, lower values are first.") }.CanBeUsedByFunctions(false).CanBeUsedOnFunctionParameters(false),
-		FMDMetaDataKey{ TEXT("NoResetToDefault"), EMDMetaDataEditorKeyType::Flag, TEXT("If set, this property will never show the 'Reset to Default' arrow button.") }.CanBeUsedByFunctions(false).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("EditCondition"), EMDMetaDataEditorKeyType::String, LOCTEXT("EditCondition_Description", "Enter a condition to determine whether or not this property can be edited. Supports Bools and Enums.") }.CanBeUsedByFunctions(false).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("EditConditionHides"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("EditConditionHides_Description", "If this property's EditCondition is false, it will be hidden.") }.CanBeUsedByFunctions(false).SetRequiredMetaData(TEXT("EditCondition")).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("DisplayAfter"), EMDMetaDataEditorKeyType::String, LOCTEXT("DisplayAfter_Description", "In the details panel, this property will be displayed after the property specified here.") }.CanBeUsedByFunctions(false).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("DisplayPriority"), EMDMetaDataEditorKeyType::Integer, LOCTEXT("DisplayPriority_Description", "The priority to display this property in the deatils panel, lower values are first.") }.CanBeUsedByFunctions(false).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("NoResetToDefault"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("NoResetToDefault_Description", "If set, this property will never show the 'Reset to Default' arrow button.") }.CanBeUsedByFunctions(false).CanBeUsedOnFunctionParameters(false),
 	});
 
 	// Bool properties
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("InlineEditConditionToggle"), EMDMetaDataEditorKeyType::Flag, TEXT("If this bool is an EditCondition for another property, it will be displayed inline.") }.SetSupportedProperty({ UEdGraphSchema_K2::PC_Boolean}).CanBeUsedOnFunctionParameters(false)
+		FMDMetaDataKey{ TEXT("InlineEditConditionToggle"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("InlineEditConditionToggle_Description", "If this bool is an EditCondition for another property, it will be displayed inline.") }.SetSupportedProperty({ UEdGraphSchema_K2::PC_Boolean}).CanBeUsedOnFunctionParameters(false)
 	});
 
 	// Any numeric property
@@ -40,7 +40,7 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double },
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, TEXT("Disables the click and drag functionality for setting the value of this property.") }.SetSupportedProperties(NumericTypes)
+		FMDMetaDataKey{ TEXT("NoSpinbox"), EMDMetaDataEditorKeyType::Boolean, LOCTEXT("NoSpinbox_Description", "Disables the click and drag functionality for setting the value of this property.") }.SetSupportedProperties(NumericTypes)
 	});
 
 	// Integers
@@ -49,14 +49,14 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Int64 },
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Integer, TEXT("How fast the value should change while dragging to set the value.") }.SetSupportedProperties(IntegerTypes).SetMinInt(1),
-		FMDMetaDataKey{ TEXT("Delta"), EMDMetaDataEditorKeyType::Integer, TEXT("How much to change the value by when dragging.") }.SetSupportedProperties(IntegerTypes),
-		FMDMetaDataKey{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Integer, TEXT("Forces the property value to be a multiple of this value.") }.SetSupportedProperties(IntegerTypes),
-		FMDMetaDataKey{ TEXT("ArrayClamp"), EMDMetaDataEditorKeyType::String, TEXT("Clamps the valid values that can be entered in the UI to be between 0 and the length of the array specified."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes).CanBeUsedOnFunctionParameters(false),
-		FMDMetaDataKey{ TEXT("ClampMin"), EMDMetaDataEditorKeyType::Integer, TEXT("Specifies the minimum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes),
-		FMDMetaDataKey{ TEXT("ClampMax"), EMDMetaDataEditorKeyType::Integer, TEXT("Specifies the maximum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes),
-		FMDMetaDataKey{ TEXT("UIMin"), EMDMetaDataEditorKeyType::Integer, TEXT("Specifies the lowest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes),
-		FMDMetaDataKey{ TEXT("UIMax"), EMDMetaDataEditorKeyType::Integer, TEXT("Specifies the highest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes)
+		FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Integer, LOCTEXT("SliderExponent_Description", "How fast the value should change while dragging to set the value.") }.SetSupportedProperties(IntegerTypes).SetMinInt(1),
+		FMDMetaDataKey{ TEXT("Delta"), EMDMetaDataEditorKeyType::Integer, LOCTEXT("Delta_Description", "How much to change the value by when dragging.") }.SetSupportedProperties(IntegerTypes),
+		FMDMetaDataKey{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Integer, LOCTEXT("Multiple_Description", "Forces the property value to be a multiple of this value.") }.SetSupportedProperties(IntegerTypes),
+		FMDMetaDataKey{ TEXT("ArrayClamp"), EMDMetaDataEditorKeyType::String, LOCTEXT("ArrayClamp_Description", "Clamps the valid values that can be entered in the UI to be between 0 and the length of the array specified."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("ClampMin"), EMDMetaDataEditorKeyType::Integer, LOCTEXT("ClampMin_Description", "Specifies the minimum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes),
+		FMDMetaDataKey{ TEXT("ClampMax"), EMDMetaDataEditorKeyType::Integer, LOCTEXT("ClampMax_Description", "Specifies the maximum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes),
+		FMDMetaDataKey{ TEXT("UIMin"), EMDMetaDataEditorKeyType::Integer, LOCTEXT("UIMin_Description", "Specifies the lowest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes),
+		FMDMetaDataKey{ TEXT("UIMax"), EMDMetaDataEditorKeyType::Integer, LOCTEXT("UIMax_Description", "Specifies the highest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(IntegerTypes)
 	});
 
 	// Float types
@@ -65,13 +65,13 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double },
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Float, TEXT("How fast the value should change while dragging to set the value.") }.SetSupportedProperties(FloatTypes).SetMinFloat(1.f),
-		FMDMetaDataKey{ TEXT("Delta"), EMDMetaDataEditorKeyType::Float, TEXT("How much to change the value by when dragging.") }.SetSupportedProperties(FloatTypes),
-		FMDMetaDataKey{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Float, TEXT("Forces the property value to be a multiple of this value.") }.SetSupportedProperties(FloatTypes),
-		FMDMetaDataKey{ TEXT("ClampMin"), EMDMetaDataEditorKeyType::Float, TEXT("Specifies the minimum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes),
-		FMDMetaDataKey{ TEXT("ClampMax"), EMDMetaDataEditorKeyType::Float, TEXT("Specifies the maximum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes),
-		FMDMetaDataKey{ TEXT("UIMin"), EMDMetaDataEditorKeyType::Float, TEXT("Specifies the lowest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes),
-		FMDMetaDataKey{ TEXT("UIMax"), EMDMetaDataEditorKeyType::Float, TEXT("Specifies the highest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes)
+		FMDMetaDataKey{ TEXT("SliderExponent"), EMDMetaDataEditorKeyType::Float, LOCTEXT("SliderExponent_Description", "How fast the value should change while dragging to set the value.") }.SetSupportedProperties(FloatTypes).SetMinFloat(1.f),
+		FMDMetaDataKey{ TEXT("Delta"), EMDMetaDataEditorKeyType::Float, LOCTEXT("Delta_Description", "How much to change the value by when dragging.") }.SetSupportedProperties(FloatTypes),
+		FMDMetaDataKey{ TEXT("Multiple"), EMDMetaDataEditorKeyType::Float, LOCTEXT("Multiple_Description", "Forces the property value to be a multiple of this value.") }.SetSupportedProperties(FloatTypes),
+		FMDMetaDataKey{ TEXT("ClampMin"), EMDMetaDataEditorKeyType::Float, LOCTEXT("ClampMin_Description", "Specifies the minimum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes),
+		FMDMetaDataKey{ TEXT("ClampMax"), EMDMetaDataEditorKeyType::Float, LOCTEXT("ClampMax_Description", "Specifies the maximum value that may be entered for the property."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes),
+		FMDMetaDataKey{ TEXT("UIMin"), EMDMetaDataEditorKeyType::Float, LOCTEXT("UIMin_Description", "Specifies the lowest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes),
+		FMDMetaDataKey{ TEXT("UIMax"), EMDMetaDataEditorKeyType::Float, LOCTEXT("UIMax_Description", "Specifies the highest that the value slider should represent."), TEXT("Value Range") }.SetSupportedProperties(FloatTypes)
 	});
 
 	// Non-localized strings
@@ -80,27 +80,27 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Name }
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("GetOptions"), EMDMetaDataEditorKeyType::String, TEXT("Specify a function that returns a list of Strings or Names that are valid values for this property. Seems to only support C++ functions since BP functions don't return anything for UFunction::GetReturnProperty().") }.SetSupportedProperties(NonLocStringTypes)
+		FMDMetaDataKey{ TEXT("GetOptions"), EMDMetaDataEditorKeyType::String, LOCTEXT("GetOptions_Description", "Specify a function that returns a list of Strings or Names that are valid values for this property. Seems to only support C++ functions since BP functions don't return anything for UFunction::GetReturnProperty().") }.SetSupportedProperties(NonLocStringTypes)
 	});
 
 	// Any Array
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("NoElementDuplicate"), EMDMetaDataEditorKeyType::Flag, TEXT("Indicates that the duplicate icon should not be shown for entries of this array in the property panel.") }.SetSupportedProperties({ FMDMetaDataEditorPropertyType{ UEdGraphSchema_K2::PC_Wildcard }.SetContainerType(EMDMetaDataPropertyContainerType::Array) })
+		FMDMetaDataKey{ TEXT("NoElementDuplicate"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("NoElementDuplicate_Description", "Indicates that the duplicate icon should not be shown for entries of this array in the property panel.") }.SetSupportedProperties({ FMDMetaDataEditorPropertyType{ UEdGraphSchema_K2::PC_Wildcard }.SetContainerType(EMDMetaDataPropertyContainerType::Array) })
 	});
 
 	// Any Map
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("ForceInlineRow"), EMDMetaDataEditorKeyType::Flag, TEXT("Force the Key and Value of a TMap to display in the same row.") }.SetSupportedProperties({ FMDMetaDataEditorPropertyType{ UEdGraphSchema_K2::PC_Wildcard }.SetValueType({UEdGraphSchema_K2::PC_Wildcard}).SetContainerType(EMDMetaDataPropertyContainerType::Map) })
+		FMDMetaDataKey{ TEXT("ForceInlineRow"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("ForceInlineRow_Description", "Force the Key and Value of a TMap to display in the same row.") }.SetSupportedProperties({ FMDMetaDataEditorPropertyType{ UEdGraphSchema_K2::PC_Wildcard }.SetValueType({UEdGraphSchema_K2::PC_Wildcard}).SetContainerType(EMDMetaDataPropertyContainerType::Map) })
 	});
 
 	// Array of Any Struct
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("TitleProperty"), EMDMetaDataEditorKeyType::String, TEXT("Specify a child property or FText style format of child properties to use as the summary.") }.SetSupportedProperties({ FMDMetaDataEditorPropertyType{ UEdGraphSchema_K2::PC_Struct }.SetContainerType(EMDMetaDataPropertyContainerType::Array) })
+		FMDMetaDataKey{ TEXT("TitleProperty"), EMDMetaDataEditorKeyType::String, LOCTEXT("TitleProperty_Description", "Specify a child property or FText style format of child properties to use as the summary.") }.SetSupportedProperties({ FMDMetaDataEditorPropertyType{ UEdGraphSchema_K2::PC_Struct }.SetContainerType(EMDMetaDataPropertyContainerType::Array) })
 	});
 
 	// Any Struct
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("ShowOnlyInnerProperties"), EMDMetaDataEditorKeyType::Flag, TEXT("Removes the struct layer in the details panel, directly displaying the child properties of the struct.") }.SetSupportedProperty({ UEdGraphSchema_K2::PC_Struct }).CanBeUsedOnFunctionParameters(false)
+		FMDMetaDataKey{ TEXT("ShowOnlyInnerProperties"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("ShowOnlyInnerProperties_Description", "Removes the struct layer in the details panel, directly displaying the child properties of the struct.") }.SetSupportedProperty({ UEdGraphSchema_K2::PC_Struct }).CanBeUsedOnFunctionParameters(false)
 	});
 
 	// Any Enum
@@ -109,8 +109,8 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Byte, NAME_None, UEnum::StaticClass() }
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("ValidEnumValues"), EMDMetaDataEditorKeyType::String, TEXT("Restricts selection to a subset of the enum's values.") }.SetSupportedProperties(EnumTypes),
-		FMDMetaDataKey{ TEXT("InvalidEnumValues"), EMDMetaDataEditorKeyType::String, TEXT("Prevents selecting a subset of the enum's values.") }.SetSupportedProperties(EnumTypes)
+		FMDMetaDataKey{ TEXT("ValidEnumValues"), EMDMetaDataEditorKeyType::String, LOCTEXT("ValidEnumValues_Description", "Restricts selection to a subset of the enum's values.") }.SetSupportedProperties(EnumTypes),
+		FMDMetaDataKey{ TEXT("InvalidEnumValues"), EMDMetaDataEditorKeyType::String, LOCTEXT("InvalidEnumValues_Description", "Prevents selecting a subset of the enum's values.") }.SetSupportedProperties(EnumTypes)
 	});
 
 	// Gameplay Tags and Containers
@@ -119,12 +119,12 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Struct, NAME_None, FGameplayTagContainer::StaticStruct() }
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("Categories"), EMDMetaDataEditorKeyType::GameplayTagContainer, TEXT("Limit which gameplay tags may be selected to one or more specific root tags.") }.SetSupportedProperties(GameplayTagTypes).SetDisplayNameOverride(LOCTEXT("Categories_DisplayName","Tag Filter"))
+		FMDMetaDataKey{ TEXT("Categories"), EMDMetaDataEditorKeyType::GameplayTagContainer, LOCTEXT("Categories_Description", "Limit which gameplay tags may be selected to one or more specific root tags.") }.SetSupportedProperties(GameplayTagTypes).SetDisplayNameOverride(LOCTEXT("Categories_DisplayName","Tag Filter"))
 	});
 
 	// Primary Asset IDs
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("AllowedTypes"), EMDMetaDataEditorKeyType::String, TEXT("Limit which Primary Data Assets may be selected to one or more specific Primary Asset Types.") }.SetSupportedProperty({ UEdGraphSchema_K2::PC_Struct, NAME_None, TBaseStructure<FPrimaryAssetId>::Get() })
+		FMDMetaDataKey{ TEXT("AllowedTypes"), EMDMetaDataEditorKeyType::String, LOCTEXT("AllowedTypes_Description", "Limit which Primary Data Assets may be selected to one or more specific Primary Asset Types.") }.SetSupportedProperty({ UEdGraphSchema_K2::PC_Struct, NAME_None, TBaseStructure<FPrimaryAssetId>::Get() })
 	});
 
 	// Data Tables
@@ -134,8 +134,8 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_SoftObject, NAME_None, UDataTable::StaticClass() }
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("RowType"), EMDMetaDataEditorKeyType::String, TEXT("Limit the selection to a specific data table row struct type.") }.SetSupportedProperties(DataTableTypes),
-		FMDMetaDataKey{ TEXT("RequiredAssetDataTags"), EMDMetaDataEditorKeyType::String, TEXT("Limit the selection to data tables with matching asset data tags.") }.SetSupportedProperties(DataTableTypes)
+		FMDMetaDataKey{ TEXT("RowType"), EMDMetaDataEditorKeyType::String, LOCTEXT("RowType_Description", "Limit the selection to a specific data table row struct type.") }.SetSupportedProperties(DataTableTypes),
+		FMDMetaDataKey{ TEXT("RequiredAssetDataTags"), EMDMetaDataEditorKeyType::String, LOCTEXT("RequiredAssetDataTags_Description", "Limit the selection to data tables with matching asset data tags.") }.SetSupportedProperties(DataTableTypes)
 	});
 
 	// Colors
@@ -144,7 +144,7 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Struct, NAME_None, TBaseStructure<FColor>::Get() }
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("HideAlphaChannel"), EMDMetaDataEditorKeyType::Flag, TEXT("Hide the alpha channel from the color picker.") }.SetSupportedProperties(ColorTypes)
+		FMDMetaDataKey{ TEXT("HideAlphaChannel"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("HideAlphaChannel_Description", "Hide the alpha channel from the color picker.") }.SetSupportedProperties(ColorTypes)
 	});
 
 	// Any UObject type
@@ -168,8 +168,8 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Struct, NAME_None, TBaseStructure<FSoftClassPath>::Get() }
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("AssetBundles"), EMDMetaDataEditorKeyType::String, TEXT("The name of the bundle to store the secondary asset in.") }.SetSupportedProperties(SoftObjectTypes),
-		FMDMetaDataKey{ TEXT("Untracked"), EMDMetaDataEditorKeyType::Flag, TEXT("Specify that the soft reference should not be tracked and therefore not automatically cooked or checked during delete or redirector fixup.") }.SetSupportedProperties(SoftObjectTypes)
+		FMDMetaDataKey{ TEXT("AssetBundles"), EMDMetaDataEditorKeyType::String, LOCTEXT("AssetBundles_Description", "The name of the bundle to store the secondary asset in.") }.SetSupportedProperties(SoftObjectTypes),
+		FMDMetaDataKey{ TEXT("Untracked"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("Untracked_Description", "Specify that the soft reference should not be tracked and therefore not automatically cooked or checked during delete or redirector fixup.") }.SetSupportedProperties(SoftObjectTypes)
 	});
 
 	// Any UClass type
@@ -179,25 +179,25 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 		{ UEdGraphSchema_K2::PC_Struct, NAME_None, TBaseStructure<FSoftClassPath>::Get() }
 	};
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("AllowAbstract"), EMDMetaDataEditorKeyType::Flag, TEXT("Include abstract classes in the class picker for this property.") }.SetSupportedProperties(ClassTypes),
-		FMDMetaDataKey{ TEXT("ShowTreeView"), EMDMetaDataEditorKeyType::Flag, TEXT("Show a tree of class inheritence instead of a list view for the class picker.") }.SetSupportedProperties(ClassTypes),
-		FMDMetaDataKey{ TEXT("BlueprintBaseOnly"), EMDMetaDataEditorKeyType::Flag, TEXT("Only allow selecting blueprint classes.") }.SetSupportedProperties(ClassTypes),
-		FMDMetaDataKey{ TEXT("ExactClass"), EMDMetaDataEditorKeyType::Flag, TEXT("Only allow selecting specifically from the list of allowed classes, no subclasses.") }.SetSupportedProperties(ClassTypes).SetRequiredMetaData(TEXT("AllowedClasses")),
-		FMDMetaDataKey{ TEXT("MustImplement"), EMDMetaDataEditorKeyType::String, TEXT("Only allow classes that inherit the specified interface.") }.SetSupportedProperties(ClassTypes)
+		FMDMetaDataKey{ TEXT("AllowAbstract"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("AllowAbstract_Description", "Include abstract classes in the class picker for this property.") }.SetSupportedProperties(ClassTypes),
+		FMDMetaDataKey{ TEXT("ShowTreeView"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("ShowTreeView_Description", "Show a tree of class inheritence instead of a list view for the class picker.") }.SetSupportedProperties(ClassTypes),
+		FMDMetaDataKey{ TEXT("BlueprintBaseOnly"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("BlueprintBaseOnly_Description", "Only allow selecting blueprint classes.") }.SetSupportedProperties(ClassTypes),
+		FMDMetaDataKey{ TEXT("ExactClass"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("ExactClass_Description", "Only allow selecting specifically from the list of allowed classes, no subclasses.") }.SetSupportedProperties(ClassTypes).SetRequiredMetaData(TEXT("AllowedClasses")),
+		FMDMetaDataKey{ TEXT("MustImplement"), EMDMetaDataEditorKeyType::String, LOCTEXT("MustImplement_Description", "Only allow classes that inherit the specified interface.") }.SetSupportedProperties(ClassTypes)
 	});
 
 	// UMG Only
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("DesignerRebuild"), EMDMetaDataEditorKeyType::Flag, TEXT("When this property changes, the widget preview will be rebuilt."), TEXT("UMG") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false),
-		FMDMetaDataKey{ TEXT("BindWidget"), EMDMetaDataEditorKeyType::Flag, TEXT("This property requires a widget be bound to it in any child Widget Blueprints."), TEXT("UMG|Bind Widget") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).SetSupportedObjectProperty(UWidget::StaticClass()).SetIncompatibleMetaData(TEXT("BindWidgetOptional")).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false),
-		FMDMetaDataKey{ TEXT("BindWidgetOptional"), EMDMetaDataEditorKeyType::Flag, TEXT("This property allows a widget be bound to it in any child Widget Blueprints."), TEXT("UMG|Bind Widget") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).SetSupportedObjectProperty(UWidget::StaticClass()).SetIncompatibleMetaData(TEXT("BindWidget")).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false),
-		FMDMetaDataKey{ TEXT("BindWidgetAnim"), EMDMetaDataEditorKeyType::Flag, TEXT("This property requires a widget animation be bound to it in any child Widget Blueprints."), TEXT("UMG|Bind Widget Anim") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).SetSupportedObjectProperty(UWidgetAnimation::StaticClass()).SetIncompatibleMetaData(TEXT("BindWidgetAnimOptional")).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false),
-		FMDMetaDataKey{ TEXT("BindWidgetAnimOptional"), EMDMetaDataEditorKeyType::Flag, TEXT("This property allows a widget animation be bound to it in any child Widget Blueprints."), TEXT("UMG|Bind Widget Anim") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).SetSupportedObjectProperty(UWidgetAnimation::StaticClass()).SetIncompatibleMetaData(TEXT("BindWidgetAnim")).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false)
+		FMDMetaDataKey{ TEXT("DesignerRebuild"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("DesignerRebuild_Description", "When this property changes, the widget preview will be rebuilt."), TEXT("UMG") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("BindWidget"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("BindWidget_Description", "This property requires a widget be bound to it in any child Widget Blueprints."), TEXT("UMG|Bind Widget") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).SetSupportedObjectProperty(UWidget::StaticClass()).SetIncompatibleMetaData(TEXT("BindWidgetOptional")).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("BindWidgetOptional"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("BindWidgetOptional_Description", "This property allows a widget be bound to it in any child Widget Blueprints."), TEXT("UMG|Bind Widget") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).SetSupportedObjectProperty(UWidget::StaticClass()).SetIncompatibleMetaData(TEXT("BindWidget")).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("BindWidgetAnim"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("BindWidgetAnim_Description", "This property requires a widget animation be bound to it in any child Widget Blueprints."), TEXT("UMG|Bind Widget Anim") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).SetSupportedObjectProperty(UWidgetAnimation::StaticClass()).SetIncompatibleMetaData(TEXT("BindWidgetAnimOptional")).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false),
+		FMDMetaDataKey{ TEXT("BindWidgetAnimOptional"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("BindWidgetAnimOptional_Description", "This property allows a widget animation be bound to it in any child Widget Blueprints."), TEXT("UMG|Bind Widget Anim") }.SetSupportedBlueprint(UWidgetBlueprint::StaticClass()).SetSupportedObjectProperty(UWidgetAnimation::StaticClass()).SetIncompatibleMetaData(TEXT("BindWidgetAnim")).CanBeUsedOnLocalVariables(false).CanBeUsedOnFunctionParameters(false)
 	});
 
 	// Functions Only
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("DefaultToSelf"), EMDMetaDataEditorKeyType::String, TEXT("Specify which function parameter should default to \"self\".") }.SetFunctionsOnly()
+		FMDMetaDataKey{ TEXT("DefaultToSelf"), EMDMetaDataEditorKeyType::String, LOCTEXT("DefaultToSelf_Description", "Specify which function parameter should default to \"self\".") }.SetFunctionsOnly()
 	});
 
 	// Objects and PrimaryAssetID
@@ -206,15 +206,15 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 	};
 	AssetTypes.Append(ObjectTypes);
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("DisplayThumbnail"), EMDMetaDataEditorKeyType::Boolean, TEXT("Whether or not to display the asset thumbnail.") }.SetSupportedProperties(AssetTypes),
-		FMDMetaDataKey{ TEXT("AllowedClasses"), EMDMetaDataEditorKeyType::String, TEXT("Filter the selection to classes that inherit from specific classes or implement specific interfaces.") }.SetSupportedProperties(AssetTypes),
-		FMDMetaDataKey{ TEXT("DisallowedClasses"), EMDMetaDataEditorKeyType::String, TEXT("Filter out classes that inherit from specific classes or implement specific interfaces from the selection.") }.SetSupportedProperties(AssetTypes)
+		FMDMetaDataKey{ TEXT("DisplayThumbnail"), EMDMetaDataEditorKeyType::Boolean, LOCTEXT("DisplayThumbnail_Description", "Whether or not to display the asset thumbnail.") }.SetSupportedProperties(AssetTypes),
+		FMDMetaDataKey{ TEXT("AllowedClasses"), EMDMetaDataEditorKeyType::String, LOCTEXT("AllowedClasses_Description", "Filter the selection to classes that inherit from specific classes or implement specific interfaces.") }.SetSupportedProperties(AssetTypes),
+		FMDMetaDataKey{ TEXT("DisallowedClasses"), EMDMetaDataEditorKeyType::String, LOCTEXT("DisallowedClasses_Description", "Filter out classes that inherit from specific classes or implement specific interfaces from the selection.") }.SetSupportedProperties(AssetTypes)
 	});
 
 	// USTRUCT
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("HiddenByDefault"), EMDMetaDataEditorKeyType::Flag, TEXT("Pins in Make and Break nodes are hidden by default.") }.SetStructsOnly(),
-		FMDMetaDataKey{ TEXT("DisableSplitPin"), EMDMetaDataEditorKeyType::Flag, TEXT("Indicates that node pins of this struct type cannot be split.") }.SetStructsOnly()
+		FMDMetaDataKey{ TEXT("HiddenByDefault"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("HiddenByDefault_Description", "Pins in Make and Break nodes are hidden by default.") }.SetStructsOnly(),
+		FMDMetaDataKey{ TEXT("DisableSplitPin"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("DisableSplitPin_Description", "Indicates that node pins of this struct type cannot be split.") }.SetStructsOnly()
 	});
 
 	// Instanced Structs
@@ -223,12 +223,12 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 	};
 	AssetTypes.Append(ObjectTypes);
 	MetaDataKeys.Append({
-		FMDMetaDataKey{ TEXT("BaseStruct"), EMDMetaDataEditorKeyType::String, TEXT("The minimum allowable type holdable by this struct.") }.SetSupportedProperties(InstancedStructs),
-		FMDMetaDataKey{ TEXT("ExcludeBaseStruct"), EMDMetaDataEditorKeyType::Flag, TEXT("Only allow subclasses of the BaseStruct type.") }.SetSupportedProperties(InstancedStructs).SetRequiredMetaData(TEXT("BaseStruct")),
-		FMDMetaDataKey{ TEXT("AllowedClasses"), EMDMetaDataEditorKeyType::String, TEXT("Inclusive list of allowed struct classes.") }.SetSupportedProperties(InstancedStructs).SetDisplayNameOverride(LOCTEXT("InstancedStruct_AllowedClasses_DisplayName","Allowed Struct Classes")),
-		FMDMetaDataKey{ TEXT("DisallowedClasses"), EMDMetaDataEditorKeyType::String, TEXT("List of struct classes to hide from picker.") }.SetSupportedProperties(InstancedStructs).SetDisplayNameOverride(LOCTEXT("InstancedStruct_DisallowedClasses_DisplayName","Disallowed Struct Classes")),
-		FMDMetaDataKey{ TEXT("ShowTreeView"), EMDMetaDataEditorKeyType::Flag, TEXT("Dispay the Struct Class picker as a tree view.") }.SetSupportedProperties(InstancedStructs),
-		FMDMetaDataKey{ TEXT("StructTypeConst"), EMDMetaDataEditorKeyType::Flag, TEXT("Struct class cannot be changed.") }.SetSupportedProperties(InstancedStructs).SetDisplayNameOverride(LOCTEXT("InstancedStruct_StructTypeConst_DisplayName","Struct Type is Constant")),
+		FMDMetaDataKey{ TEXT("BaseStruct"), EMDMetaDataEditorKeyType::String, LOCTEXT("InstancedStruct_BaseStruct_Description", "The minimum allowable type holdable by this struct.") }.SetSupportedProperties(InstancedStructs),
+		FMDMetaDataKey{ TEXT("ExcludeBaseStruct"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("InstancedStruct_ExcludeBaseStruct_Description", "Only allow subclasses of the BaseStruct type.") }.SetSupportedProperties(InstancedStructs).SetRequiredMetaData(TEXT("BaseStruct")),
+		FMDMetaDataKey{ TEXT("AllowedClasses"), EMDMetaDataEditorKeyType::String, LOCTEXT("InstancedStruct_AllowedClasses_Description", "Inclusive list of allowed struct classes.") }.SetSupportedProperties(InstancedStructs).SetDisplayNameOverride(LOCTEXT("InstancedStruct_AllowedClasses_DisplayName","Allowed Struct Classes")),
+		FMDMetaDataKey{ TEXT("DisallowedClasses"), EMDMetaDataEditorKeyType::String, LOCTEXT("InstancedStruct_DisallowedClasses_Description", "List of struct classes to hide from picker.") }.SetSupportedProperties(InstancedStructs).SetDisplayNameOverride(LOCTEXT("InstancedStruct_DisallowedClasses_DisplayName","Disallowed Struct Classes")),
+		FMDMetaDataKey{ TEXT("ShowTreeView"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("InstancedStruct_ShowTreeView_Description", "Dispay the Struct Class picker as a tree view.") }.SetSupportedProperties(InstancedStructs),
+		FMDMetaDataKey{ TEXT("StructTypeConst"), EMDMetaDataEditorKeyType::Flag, LOCTEXT("InstancedStruct_StructTypeConst_Description", "Struct class cannot be changed.") }.SetSupportedProperties(InstancedStructs).SetDisplayNameOverride(LOCTEXT("InstancedStruct_StructTypeConst_DisplayName","Struct Type is Constant")),
 	});
 
 	// Sort pre-defined keys
