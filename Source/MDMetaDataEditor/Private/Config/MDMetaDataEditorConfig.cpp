@@ -224,6 +224,11 @@ UMDMetaDataEditorConfig::UMDMetaDataEditorConfig()
 	AssetTypes.Append(ObjectTypes);
 	MetaDataKeys.Append({
 		FMDMetaDataKey{ TEXT("BaseStruct"), EMDMetaDataEditorKeyType::String, TEXT("The minimum allowable type holdable by this struct.") }.SetSupportedProperties(InstancedStructs),
+		FMDMetaDataKey{ TEXT("ExcludeBaseStruct"), EMDMetaDataEditorKeyType::Flag, TEXT("Only allow subclasses of the BaseStruct type.") }.SetSupportedProperties(InstancedStructs).SetRequiredMetaData(TEXT("BaseStruct")),
+		FMDMetaDataKey{ TEXT("AllowedClasses"), EMDMetaDataEditorKeyType::String, TEXT("Inclusive list of allowed struct classes.") }.SetSupportedProperties(InstancedStructs).SetDisplayNameOverride(LOCTEXT("InstancedStruct_AllowedClasses_DisplayName","Allowed Struct Classes")),
+		FMDMetaDataKey{ TEXT("DisallowedClasses"), EMDMetaDataEditorKeyType::String, TEXT("List of struct classes to hide from picker.") }.SetSupportedProperties(InstancedStructs).SetDisplayNameOverride(LOCTEXT("InstancedStruct_DisallowedClasses_DisplayName","Disallowed Struct Classes")),
+		FMDMetaDataKey{ TEXT("ShowTreeView"), EMDMetaDataEditorKeyType::Flag, TEXT("Dispay the Struct Class picker as a tree view.") }.SetSupportedProperties(InstancedStructs),
+		FMDMetaDataKey{ TEXT("StructTypeConst"), EMDMetaDataEditorKeyType::Flag, TEXT("Struct class cannot be changed.") }.SetSupportedProperties(InstancedStructs).SetDisplayNameOverride(LOCTEXT("InstancedStruct_StructTypeConst_DisplayName","Struct Type is Constant")),
 	});
 
 	// Sort pre-defined keys
