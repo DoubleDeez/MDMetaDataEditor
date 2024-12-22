@@ -36,17 +36,9 @@ public:
 		FSimpleMemberReference PropertySubTypeMemberReference = FSimpleMemberReference(),
 		FInstancedStruct ValueType = FInstancedStruct(),
 		EMDMetaDataPropertyContainerType ContainerType = EMDMetaDataPropertyContainerType::None
-		)
-		: PropertyType(PropertyType)
-		, PropertySubType(PropertySubType)
-		, PropertySubTypeObject(PropertySubTypeObject)
-		, PropertySubTypeMemberReference(PropertySubTypeMemberReference)
-		, ValueType(ValueType)
-		, ContainerType(ContainerType)
-	{
-		// Fix any newly constructed property types.
-		FixUp();
-	}
+	);
+
+	void FixUp();
 
 	FEdGraphPinType ToGraphPinType() const;
 	FEdGraphTerminalType ToGraphTerminalType() const;
@@ -75,8 +67,6 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
 	EMDMetaDataPropertyContainerType ContainerType = EMDMetaDataPropertyContainerType::None;
 	FMDMetaDataEditorPropertyType& SetContainerType(EMDMetaDataPropertyContainerType InContainerType) { ContainerType = InContainerType; return *this; }
-
-	void FixUp();
 
 	bool operator==(const FMDMetaDataEditorPropertyType& Other) const;
 	bool operator!=(const FMDMetaDataEditorPropertyType& Other) const
