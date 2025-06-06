@@ -29,7 +29,7 @@
 #include "Widgets/SMDMetaDataStringComboBox.h"
 #include "Widgets/Text/STextBlock.h"
 
-#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 5
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5) // On or after UE 5.5
 #include "StructUtils/UserDefinedStruct.h"
 #endif
 
@@ -213,7 +213,11 @@ const TMap<FName, FString>* FMDMetaDataEditorFieldView::GetMetadataMap() const
 	}
 	else if (UUserDefinedStruct* Struct = MetadataStruct.Get())
 	{
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6) // On or after UE 5.6
+		return FMetaData::GetMapForObject(Struct);
+#else // Pre UE 5.6
 		return UMetaData::GetMapForObject(Struct);
+#endif
 	}
 
 	return nullptr;

@@ -5,10 +5,10 @@
 
 #include "DetailLayoutBuilder.h"
 #include "Runtime/Launch/Resources/Version.h"
-#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3) // On or after UE 5.3
 #include "SGameplayTagCombo.h"
 #include "SGameplayTagPicker.h"
-#else
+#else // Pre UE 5.3
 #include "SGameplayTagWidget.h"
 #endif
 #include "Widgets/Input/SComboButton.h"
@@ -39,7 +39,7 @@ void SMDMetaDataGameplayTagPicker::Construct(const FArguments& InArgs)
 
 	ChildSlot
 	[
-#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3) // On or after UE 5.3
 		!bIsMulti
 			? TSharedRef<SWidget>(SNew(SGameplayTagCombo)
 				.Tag(GameplayTagContainer.First())
@@ -57,12 +57,12 @@ void SMDMetaDataGameplayTagPicker::Construct(const FArguments& InArgs)
 		]
 		.MenuContent()
 		[
-#if ENGINE_MAJOR_VERSION > 5 || ENGINE_MINOR_VERSION >= 3
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3) // On or after UE 5.3
 			SNew(SGameplayTagPicker)
 				.ShowMenuItems(true)
 				.TagContainers({ GameplayTagContainer })
 				.OnTagChanged(this, &SMDMetaDataGameplayTagPicker::UpdateMetaDataContainer)
-#else
+#else // Pre UE 5.3
 			SNew(SGameplayTagWidget, TArray<SGameplayTagWidget::FEditableGameplayTagContainerDatum>{ { nullptr, &GameplayTagContainer } })
 			.MultiSelect(bIsMulti)
 			.OnTagChanged(this, &SMDMetaDataGameplayTagPicker::UpdateMetaData, bIsMulti)

@@ -13,7 +13,11 @@ void FMDMetaDataEditorStructChangeHandler::PreChange(const UUserDefinedStruct* S
 		FMDMetaDataEditorCachedStructMetadata& Cache = CachedStructMetadata.FindOrAdd(Struct);
 		if (Cache.Count++ == 0)
 		{
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6) // On or after UE 5.6
+			if (TMap<FName, FString>* MetaDataMap = FMetaData::GetMapForObject(Struct))
+#else // Pre UE 5.6
 			if (TMap<FName, FString>* MetaDataMap = UMetaData::GetMapForObject(Struct))
+#endif
 			{
 				Cache.StructMetadata = *MetaDataMap;
 			}
@@ -37,7 +41,11 @@ void FMDMetaDataEditorStructChangeHandler::PostChange(const UUserDefinedStruct* 
 		{
 			if (--Cache->Count == 0)
 			{
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6) // On or after UE 5.6
+				TMap<FName, FString>& MetaDataMap = Struct->GetOutermost()->GetMetaData().ObjectMetaDataMap.FindOrAdd(Struct);
+#else // Pre UE 5.6
 				TMap<FName, FString>& MetaDataMap = Struct->GetOutermost()->GetMetaData()->ObjectMetaDataMap.FindOrAdd(Struct);
+#endif
 				MetaDataMap.Append(MoveTemp(Cache->StructMetadata));
 
 				for (TFieldIterator<FProperty> PropertyIter(Struct); PropertyIter; ++PropertyIter)
