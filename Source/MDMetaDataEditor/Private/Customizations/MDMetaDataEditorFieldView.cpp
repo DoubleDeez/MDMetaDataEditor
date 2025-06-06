@@ -87,8 +87,9 @@ namespace MDMDEFV_Private
 
 const FString FMDMetaDataEditorFieldView::MultipleValues = TEXT("Multiple Values");
 
-FMDMetaDataEditorFieldView::FMDMetaDataEditorFieldView(FProperty* InProperty, UBlueprint* InBlueprint)
+FMDMetaDataEditorFieldView::FMDMetaDataEditorFieldView(FProperty* InProperty, FProperty* InSkelProperty, UBlueprint* InBlueprint)
 	: MetadataProperty(InProperty)
+	, MetadataSkeletonProperty(InSkelProperty)
 	, BlueprintPtr(InBlueprint)
 {
 	if (InProperty != nullptr)
@@ -128,8 +129,9 @@ FMDMetaDataEditorFieldView::FMDMetaDataEditorFieldView(FProperty* InProperty, UU
 {
 }
 
-FMDMetaDataEditorFieldView::FMDMetaDataEditorFieldView(FProperty* InProperty, UK2Node_EditablePinBase* InNode)
+FMDMetaDataEditorFieldView::FMDMetaDataEditorFieldView(FProperty* InProperty, FProperty* InSkelProperty, UK2Node_EditablePinBase* InNode)
 	: MetadataProperty(InProperty)
+	, MetadataSkeletonProperty(InSkelProperty)
 	, BlueprintPtr(IsValid(InNode) ? InNode->GetBlueprint() : nullptr)
 {
 	if (InProperty != nullptr)
@@ -871,6 +873,11 @@ void FMDMetaDataEditorFieldView::SetMetadataValue(const FName& Key, const FStrin
 					Property->SetMetaData(Key, FString(Value));
 					VariableDescription.SetMetaData(Key, Value);
 					bDidFindMetaData = true;
+
+					if (FProperty* SkeletonProperty = MetadataSkeletonProperty.Get())
+					{
+						SkeletonProperty->SetMetaData(Key, FString(Value));
+					}
 				}
 			}
 
@@ -886,6 +893,11 @@ void FMDMetaDataEditorFieldView::SetMetadataValue(const FName& Key, const FStrin
 							FuncNode->Modify();
 							Property->SetMetaData(Key, FString(Value));
 							VariableDescription.SetMetaData(Key, Value);
+
+							if (FProperty* SkeletonProperty = MetadataSkeletonProperty.Get())
+							{
+								SkeletonProperty->SetMetaData(Key, FString(Value));
+							}
 						}
 					}
 				}
@@ -900,6 +912,11 @@ void FMDMetaDataEditorFieldView::SetMetadataValue(const FName& Key, const FStrin
 			}
 
 			Property->SetMetaData(Key, FString(Value));
+
+			if (FProperty* SkeletonProperty = MetadataSkeletonProperty.Get())
+			{
+				SkeletonProperty->SetMetaData(Key, FString(Value));
+			}
 		}
 	}
 
