@@ -24,11 +24,16 @@ public class MDMetaDataEditor : ModuleRules
 				"KismetWidgets",
 				"Slate",
 				"SlateCore",
-				"StructUtils",
 				"UMG",
 				"UMGEditor",
 				"UnrealEd"
 			}
 		);
-	}
+
+        // Use StructUtils 5.0 - 5.4
+        if (Target.Version.MajorVersion >= 5 && Target.Version.MinorVersion <= 4)
+        {
+            PrivateDependencyModuleNames.Add("StructUtils");
+        }
+    }
 }
