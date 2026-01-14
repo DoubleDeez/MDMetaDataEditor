@@ -3,6 +3,7 @@
 
 #include "MDMetaDataEditorStructChangeHandler.h"
 
+#include "Runtime/Launch/Resources/Version.h"
 #include "UObject/MetaData.h"
 #include "UObject/Package.h"
 
