@@ -34,8 +34,10 @@ void FMDMetaDataEditorVariableCustomization::CustomizeObject(IDetailLayoutBuilde
 			|| (!bIsLocalVariable && Config->bEnableMetaDataEditorForVariables);
 		if (bIsEnabled)
 		{
+			FProperty* SkeletonProperty = GetBlueprint()->SkeletonGeneratedClass->FindPropertyByName(Property->GetFName());
+
 			TMap<FName, IDetailGroup*> GroupMap;
-			VariableFieldView = MakeShared<FMDMetaDataEditorFieldView>(Property, GetBlueprint());
+			VariableFieldView = MakeShared<FMDMetaDataEditorFieldView>(Property, SkeletonProperty, GetBlueprint());
 			VariableFieldView->RequestRefresh.BindSP(this, &FMDMetaDataEditorVariableCustomization::RefreshDetails);
 			VariableFieldView->GenerateMetadataEditor(DetailLayout, GroupMap);
 		}

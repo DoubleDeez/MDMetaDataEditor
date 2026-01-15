@@ -45,9 +45,9 @@ enum class EMDMetaDataEditorFieldType : uint8
 class MDMETADATAEDITOR_API FMDMetaDataEditorFieldView : public TSharedFromThis<FMDMetaDataEditorFieldView>
 {
 public:
-	FMDMetaDataEditorFieldView(FProperty* InProperty, UBlueprint* InBlueprint);
+	FMDMetaDataEditorFieldView(FProperty* InProperty, FProperty* InSkelProperty, UBlueprint* InBlueprint);
 	FMDMetaDataEditorFieldView(FProperty* InProperty, UUserDefinedStruct* InUserDefinedStruct);
-	FMDMetaDataEditorFieldView(FProperty* InProperty, UK2Node_EditablePinBase* InNode);
+	FMDMetaDataEditorFieldView(FProperty* InProperty, FProperty* InSkelProperty, UK2Node_EditablePinBase* InNode);
 	explicit FMDMetaDataEditorFieldView(UUserDefinedStruct* InUserDefinedStruct);
 	FMDMetaDataEditorFieldView(UK2Node_FunctionEntry* InFunctionEntry, UBlueprint* InBlueprint);
 	FMDMetaDataEditorFieldView(UK2Node_Tunnel* InTunnel, UBlueprint* InBlueprint);
@@ -109,6 +109,7 @@ private:
 	bool CanPasteMetadata(FName Key) const;
 
 	TWeakFieldPtr<FProperty> MetadataProperty;
+	TWeakFieldPtr<FProperty> MetadataSkeletonProperty;
 	TWeakObjectPtr<UUserDefinedStruct> MetadataStruct;
 	TWeakObjectPtr<UK2Node_FunctionEntry> MetadataFunctionEntry;
 	TWeakObjectPtr<UK2Node_Tunnel> MetadataTunnel;
