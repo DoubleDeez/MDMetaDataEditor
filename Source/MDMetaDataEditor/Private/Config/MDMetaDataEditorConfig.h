@@ -59,6 +59,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
 	bool bEnableMetaDataEditorForStructs = true;
 
+	// If true, adds a Property Visibility row to metadata section. This controls how visible and editable the property is in the class defaults and object instance details panels.
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Meta Data Editor")
+	bool bEnablePropertyVisibilityEditor = true;
+
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif //WITH_EDITOR
