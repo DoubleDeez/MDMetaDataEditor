@@ -2,6 +2,8 @@
 
 #include "MDMetaDataKey.h"
 
+#define LOCTEXT_NAMESPACE "MDMetaDataEditor"
+
 bool FMDMetaDataKey::DoesSupportBlueprint(const UBlueprint* Blueprint) const
 {
 	if (!IsValid(Blueprint))
@@ -52,12 +54,14 @@ FText FMDMetaDataKey::GetKeyDisplayText() const
 
 FText FMDMetaDataKey::GetToolTipText() const
 {
-	FString ToolTip = Description;
 	if (bUseDisplayNameOverride)
 	{
-		ToolTip += "\r\n\r\nMeta Data Key: \"" + Key.ToString() + "\"";
+		return FText::Format(LOCTEXT("DisplayNameOverrideToolTipFormat", "{0}\n\nMeta Data Key: \"{1}\""), Description, FText::FromName(Key));
 	}
-	return FText::FromString(ToolTip);
+	else
+	{
+		return Description;
+	}
 }
 
 FText FMDMetaDataKey::GetFilterText() const
@@ -74,3 +78,5 @@ bool FMDMetaDataKey::operator==(const FMDMetaDataKey& Other) const
 {
 	return Key == Other.Key && KeyType == Other.KeyType;
 }
+
+#undef LOCTEXT_NAMESPACE

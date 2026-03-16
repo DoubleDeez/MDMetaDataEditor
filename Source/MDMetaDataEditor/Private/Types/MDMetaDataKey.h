@@ -57,7 +57,7 @@ public:
 	EMDMetaDataEditorKeyType KeyType = EMDMetaDataEditorKeyType::Flag;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor", meta = (MultiLine))
-	FString Description;
+	FText Description;
 
 	// Group meta data in sub-categories by setting this value, nested categories delineated with pipe characters `|`
 	UPROPERTY(EditAnywhere, Config, Category = "Meta Data Editor")
