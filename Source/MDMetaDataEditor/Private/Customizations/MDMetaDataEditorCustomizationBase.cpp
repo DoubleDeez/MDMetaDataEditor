@@ -7,7 +7,6 @@
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "Engine/UserDefinedStruct.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailGroup.h"
 #include "K2Node_CustomEvent.h"
@@ -15,6 +14,7 @@
 #include "K2Node_FunctionResult.h"
 #include "K2Node_Tunnel.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "Misc/EngineVersionComparison.h"
 #include "ScopedTransaction.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
@@ -23,6 +23,12 @@
 #include "Widgets/SMDMetaDataGameplayTagPicker.h"
 #include "Widgets/SMDMetaDataStringComboBox.h"
 #include "Widgets/Text/STextBlock.h"
+
+#if UE_VERSION_NEWER_THAN_OR_EQUAL(5,5,0)
+	#include "StructUtils/UserDefinedStruct.h"
+#else
+	#include "Engine/UserDefinedStruct.h"
+#endif
 
 FMDMetaDataEditorCustomizationBase::FMDMetaDataEditorCustomizationBase(const TWeakPtr<IBlueprintEditor>& BlueprintEditor, TWeakObjectPtr<UBlueprint>&& BlueprintPtr)
 	: BlueprintEditor(BlueprintEditor)

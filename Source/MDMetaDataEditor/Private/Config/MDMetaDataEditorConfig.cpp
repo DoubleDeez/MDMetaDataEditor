@@ -6,11 +6,17 @@
 #include "Animation/WidgetAnimation.h"
 #include "Components/Widget.h"
 #include "Engine/DataTable.h"
-#include "Engine/UserDefinedStruct.h"
 #include "GameplayTagContainer.h"
 #include "MDMetaDataEditorModule.h"
+#include "Misc/EngineVersionComparison.h"
 #include "Modules/ModuleManager.h"
 #include "WidgetBlueprint.h"
+
+#if UE_VERSION_NEWER_THAN_OR_EQUAL(5,5,0)
+	#include "StructUtils/UserDefinedStruct.h"
+#else
+	#include "Engine/UserDefinedStruct.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "MDMetaDataEditor"
 

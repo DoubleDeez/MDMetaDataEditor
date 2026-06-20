@@ -5,8 +5,14 @@
 #include "Config/MDMetaDataEditorConfig.h"
 #include "Customizations/MDMetaDataEditorFieldView.h"
 #include "DetailLayoutBuilder.h"
-#include "Engine/UserDefinedStruct.h"
 #include "Kismet2/StructureEditorUtils.h"
+#include "Misc/EngineVersionComparison.h"
+
+#if UE_VERSION_NEWER_THAN_OR_EQUAL(5,5,0)
+	#include "StructUtils/UserDefinedStruct.h"
+#else
+	#include "Engine/UserDefinedStruct.h"
+#endif
 
 FMDMetaDataEditorStructCustomization::FMDMetaDataEditorStructCustomization(TWeakPtr<FMDUserStructMetaDataEditorView> InStructMetaDataView)
 	: FMDMetaDataEditorCustomizationBase(nullptr, nullptr)
