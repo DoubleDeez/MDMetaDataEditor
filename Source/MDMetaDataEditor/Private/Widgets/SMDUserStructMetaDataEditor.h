@@ -2,10 +2,16 @@
 
 #pragma once
 
-#include "Engine/UserDefinedStruct.h"
 #include "Kismet2/StructureEditorUtils.h"
 #include "Misc/NotifyHook.h"
 #include "Widgets/SCompoundWidget.h"
+#include "Misc/EngineVersionComparison.h"
+
+#if UE_VERSION_NEWER_THAN_OR_EQUAL(5,5,0)
+	#include "StructUtils/UserDefinedStruct.h"
+#else
+	#include "Engine/UserDefinedStruct.h"
+#endif
 
 class FSpawnTabArgs;
 class IDetailsView;
