@@ -8,7 +8,11 @@
 #include "Customizations/MDMetaDataEditorCustomizationBase.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "Engine/UserDefinedStruct.h"
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5) || ENGINE_MAJOR_VERSION > 5
+    #include "StructUtils/UserDefinedStruct.h"
+#else
+    #include "Engine/UserDefinedStruct.h"
+#endif
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailGroup.h"
 #include "K2Node_CustomEvent.h"

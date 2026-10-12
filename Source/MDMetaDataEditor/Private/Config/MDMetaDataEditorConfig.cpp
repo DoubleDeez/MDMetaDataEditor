@@ -6,7 +6,12 @@
 #include "Animation/WidgetAnimation.h"
 #include "Components/Widget.h"
 #include "Engine/DataTable.h"
-#include "Engine/UserDefinedStruct.h"
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5) || ENGINE_MAJOR_VERSION > 5
+    #include "StructUtils/UserDefinedStruct.h"
+#else
+    #include "Engine/UserDefinedStruct.h"
+#endif
+
 #include "GameplayTagContainer.h"
 #include "MDMetaDataEditorModule.h"
 #include "Modules/ModuleManager.h"

@@ -2,7 +2,11 @@
 
 #pragma once
 
-#include "Engine/UserDefinedStruct.h"
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5) || ENGINE_MAJOR_VERSION > 5
+    #include "StructUtils/UserDefinedStruct.h"
+#else
+    #include "Engine/UserDefinedStruct.h"
+#endif
 #include "Kismet2/StructureEditorUtils.h"
 #include "Misc/NotifyHook.h"
 #include "Widgets/SCompoundWidget.h"

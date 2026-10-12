@@ -8,7 +8,11 @@
 #include "Customizations/MDMetaDataEditorPropertyTypeCustomization.h"
 #include "Customizations/MDMetaDataEditorStructChangeHandler.h"
 #include "Customizations/MDMetaDataEditorVariableCustomization.h"
-#include "Engine/UserDefinedStruct.h"
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5) || ENGINE_MAJOR_VERSION > 5
+    #include "StructUtils/UserDefinedStruct.h"
+#else
+    #include "Engine/UserDefinedStruct.h"
+#endif
 #include "K2Node_CustomEvent.h"
 #include "K2Node_FunctionEntry.h"
 #include "K2Node_Tunnel.h"
